@@ -1,3 +1,5 @@
+import os
+
 import typer
 import asyncio
 
@@ -39,3 +41,24 @@ def user_list(
 def user(id: str):
     client = get_or_ask_config(general_state["config"])
     asyncio.run(get_user(client, id))
+
+
+@app.command()
+def import_users_teams_example():
+    import domjudge_tool_cli
+
+    file_name = "import-users-teams-example.csv"
+    file_path = os.path.join(
+        domjudge_tool_cli.__path__[0],
+        "templates",
+        "csv",
+        file_name,
+    )
+    new_file_path = os.path.join(os.getcwd(), file_name)
+    with open(file_path, encoding='utf-8') as template_file:
+        content = template_file.read()
+
+    with open(new_file_path, 'w', encoding='utf-8') as file:
+        file.write(content)
+
+    typer.echo(new_file_path)
