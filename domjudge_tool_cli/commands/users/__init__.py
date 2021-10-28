@@ -27,7 +27,7 @@ def user_list(
     file: Optional[typer.FileBinaryWrite] = typer.Option(
         None,
         help="Export file name",
-    )
+    ),
 ):
     user_ids = None
     if ids:
@@ -55,10 +55,10 @@ def import_users_teams_example():
         file_name,
     )
     new_file_path = os.path.join(os.getcwd(), file_name)
-    with open(file_path, encoding='utf-8') as template_file:
+    with open(file_path, encoding="utf-8") as template_file:
         content = template_file.read()
 
-    with open(new_file_path, 'w', encoding='utf-8') as file:
+    with open(new_file_path, "w", encoding="utf-8") as file:
         file.write(content)
 
     typer.echo(new_file_path)

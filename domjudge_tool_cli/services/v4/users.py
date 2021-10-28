@@ -5,7 +5,6 @@ from .base import V4Client
 
 
 class UsersAPI(V4Client):
-
     async def all_users(
         self,
         ids: Optional[List[str]],

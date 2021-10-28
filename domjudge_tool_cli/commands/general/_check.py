@@ -4,7 +4,7 @@ from typing import Optional
 from pathlib import Path
 
 from domjudge_tool_cli.models import DomServerClient
-from domjudge_tool_cli.services.v4 import GeneralAPI
+from domjudge_tool_cli.services.v4 import GeneralAPI, DomServerWeb
 
 
 async def get_version(client: DomServerClient):
@@ -16,6 +16,17 @@ async def get_version(client: DomServerClient):
         bold=True,
     )
     typer.echo(message)
+
+
+async def check_login_website(client: DomServerClient):
+    async with DomServerWeb(**client.api_params) as web:
+        await web.login()
+        message = typer.style(
+            f"Success connect DomJudge website.",
+            fg=typer.colors.GREEN,
+            bold=True,
+        )
+        typer.echo(message)
 
 
 def create_config(
@@ -53,6 +64,3 @@ def read_config(path: Optional[Path] = None) -> DomServerClient:
         return client
 
     raise FileNotFoundError(path)
-
-
-

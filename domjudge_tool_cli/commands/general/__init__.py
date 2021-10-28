@@ -7,7 +7,7 @@ from pathlib import Path
 
 from domjudge_tool_cli.models import DomServerClient
 
-from ._check import get_version, create_config, read_config
+from ._check import get_version, create_config, read_config, check_login_website
 
 
 app = typer.Typer()
@@ -64,7 +64,9 @@ def get_or_ask_config(path: Optional[Path] = None) -> DomServerClient:
 
 @app.command()
 def check(
-    host: Optional[str] = typer.Option(None, help="Dom server host URL.", show_default=False),
+    host: Optional[str] = typer.Option(
+        None, help="Dom server host URL.", show_default=False
+    ),
     username: Optional[str] = typer.Option(
         None,
         help="Dom server user, must be `admin`, `api_reader`, `api_writer` roles.",
@@ -86,6 +88,7 @@ def check(
         client = get_or_ask_config(general_state["config"])
 
     asyncio.run(get_version(client))
+    asyncio.run(check_login_website(client))
 
 
 @app.command()
@@ -97,10 +100,7 @@ def config(
         prompt=True,
     ),
     password: str = typer.Option(
-        ...,
-        help="Dom server user password.",
-        prompt=True,
-        hide_input=True
+        ..., help="Dom server user password.", prompt=True, hide_input=True
     ),
     disable_ssl: Optional[bool] = typer.Option(None),
     timeout: Optional[float] = typer.Option(None),
