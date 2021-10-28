@@ -4,20 +4,19 @@ from typing import List, Optional
 from pydantic import (
     BaseModel,
     EmailStr,
-    IPvAnyAddress,
 )
 
 
 class User(BaseModel):
-    last_login_time: Optional[datetime]
-    first_login_time: Optional[datetime]
+    last_login_time: Optional[str]
+    first_login_time: Optional[str]
     team: Optional[str]
     roles: List[str]
     id: str
     username: str
     name: str
     email: Optional[EmailStr]
-    last_ip: Optional[IPvAnyAddress]
-    ip: Optional[IPvAnyAddress]
+    last_ip: Optional[str]
+    ip: Optional[str]
     enabled: bool
     team_id: Optional[str]

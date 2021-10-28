@@ -22,6 +22,7 @@ def gen_user_dataset(users: List[User]) -> Dataset:
 
 class UserExportFormat(str, Enum):
     JSON = "json"
+    CSV = "csv"
 
     def export(
         self,
@@ -30,10 +31,10 @@ class UserExportFormat(str, Enum):
     ):
         dataset = gen_user_dataset(users)
         if file:
-            file.write(dataset.export(str(self)))
+            file.write(dataset.export(self.value))
         else:
-            with open(f"export_user{str(self)}", "wb") as f:
-                f.write(dataset.export(str(self)))
+            with open(f"export_users.{self.value}", "w") as f:
+                f.write(dataset.export(self.value))
 
 
 def print_users_table(users: List[User]):

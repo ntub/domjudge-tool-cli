@@ -47,7 +47,7 @@ def user(id: str):
 def import_users_teams_example():
     import domjudge_tool_cli
 
-    file_name = "import-users-teams-example.csv"
+    file_name = "import-users-teams.csv"
     file_path = os.path.join(
         domjudge_tool_cli.__path__[0],
         "templates",
