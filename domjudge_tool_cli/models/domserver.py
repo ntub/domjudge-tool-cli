@@ -16,6 +16,8 @@ class DomServerClient(BaseModel):
     timeout: Optional[float] = None
     max_connections: Optional[int] = None
     max_keepalive_connections: Optional[int] = None
+    category_id: Optional[int] = None
+    affiliation_id: Optional[int] = None
 
     @property
     def get_timeout(self) -> Optional["httpx.Timeout"]:

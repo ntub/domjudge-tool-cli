@@ -20,3 +20,10 @@ class User(BaseModel):
     ip: Optional[str]
     enabled: bool
     team_id: Optional[str]
+
+
+class CreateUser(BaseModel):
+    username: str
+    name: str
+    email: Optional[EmailStr] = None
+    password: Optional[str] = None

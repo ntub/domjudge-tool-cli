@@ -7,7 +7,13 @@ from pathlib import Path
 
 from domjudge_tool_cli.models import DomServerClient
 
-from ._check import get_version, create_config, read_config, check_login_website
+from ._check import (
+    get_version,
+    create_config,
+    read_config,
+    check_login_website,
+    update_config,
+)
 
 
 app = typer.Typer()
@@ -89,6 +95,16 @@ def check(
 
     asyncio.run(get_version(client))
     asyncio.run(check_login_website(client))
+
+
+@app.command()
+def contest_config(
+    category_id: Optional[int] = typer.Argument(None, show_default=False),
+    affiliation_id: Optional[int] = typer.Argument(None, show_default=False),
+):
+    client = get_or_ask_config(general_state["config"])
+
+    update_config(client, category_id=category_id, affiliation_id=affiliation_id)
 
 
 @app.command()

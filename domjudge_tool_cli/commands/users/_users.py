@@ -1,6 +1,6 @@
 import typer
 
-from typing import Optional, List
+from typing import Optional, List, Any
 from enum import Enum
 
 from tablib import Dataset
@@ -9,7 +9,7 @@ from domjudge_tool_cli.models import User, DomServerClient
 from domjudge_tool_cli.services.v4 import UsersAPI
 
 
-def gen_user_dataset(users: List[User]) -> Dataset:
+def gen_user_dataset(users: List[Any]) -> Dataset:
     dataset = Dataset()
     for idx, user in enumerate(users):
         if idx == 0:
@@ -26,7 +26,7 @@ class UserExportFormat(str, Enum):
 
     def export(
         self,
-        users: List[User],
+        users: List[Any],
         file: Optional[typer.FileBinaryWrite],
     ):
         dataset = gen_user_dataset(users)
@@ -39,8 +39,8 @@ class UserExportFormat(str, Enum):
 
 def print_users_table(users: List[User]):
     dataset = gen_user_dataset(users)
-    for pre_rm in ["last_login_time", "first_login_time", "roles", "last_ip", "ip"]:
-        del dataset[pre_rm]
+    for rm_key in ["last_login_time", "first_login_time", "roles", "last_ip", "ip"]:
+        del dataset[rm_key]
     typer.echo(dataset.export("cli", tablefmt="simple"))
 
 

@@ -1,6 +1,6 @@
 import typer
 
-from typing import Optional
+from typing import Optional, Dict, Any
 from pathlib import Path
 
 from domjudge_tool_cli.models import DomServerClient
@@ -64,3 +64,18 @@ def read_config(path: Optional[Path] = None) -> DomServerClient:
         return client
 
     raise FileNotFoundError(path)
+
+
+def update_config(
+    dom_server: DomServerClient,
+    **kwargs: Dict[str, Any],
+) -> DomServerClient:
+    for k, v in kwargs.items():
+        if hasattr(dom_server, k):
+            setattr(dom_server, k, v)
+
+    with open("domserver.json", "wb+") as f:
+        f.write(dom_server.json().encode())
+        typer.echo("Success update config.")
+
+    return dom_server
