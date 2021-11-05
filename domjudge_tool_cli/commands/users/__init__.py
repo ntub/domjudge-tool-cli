@@ -3,14 +3,14 @@ import os
 import typer
 import asyncio
 
-from typing import Optional
+from typing import Optional, List
 
 from domjudge_tool_cli.commands.general import (
     get_or_ask_config,
     general_state,
 )
 
-from ._users import UserExportFormat, get_users, get_user
+from ._users import UserExportFormat, get_users, get_user, create_teams_and_users
 
 
 app = typer.Typer()
@@ -62,3 +62,34 @@ def import_users_teams_example():
         file.write(content)
 
     typer.echo(new_file_path)
+
+
+@app.command()
+def import_users_teams(
+    file: typer.FileText = typer.Argument(...),
+    category_id: Optional[int] = typer.Option(None),
+    affiliation_id: Optional[int] = typer.Option(None),
+    user_roles: Optional[List[int]] = typer.Option(None),
+    enabled: bool = typer.Option(True),
+    format: Optional[UserExportFormat] = None,
+    ignore_existing: bool = typer.Option(False),
+    delete_existing: bool = typer.Option(False),
+    password_length: Optional[int] = typer.Option(None),
+    password_pattern: Optional[str] = typer.Option(None),
+):
+    client = get_or_ask_config(general_state["config"])
+    asyncio.run(
+        create_teams_and_users(
+            client,
+            file,
+            category_id,
+            affiliation_id,
+            user_roles,
+            enabled,
+            format,
+            ignore_existing,
+            delete_existing,
+            password_length,
+            password_pattern,
+        ),
+    )

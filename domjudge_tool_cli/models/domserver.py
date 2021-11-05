@@ -1,6 +1,6 @@
 import httpx
 
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 from pydantic import (
     BaseModel,
@@ -18,6 +18,7 @@ class DomServerClient(BaseModel):
     max_keepalive_connections: Optional[int] = None
     category_id: Optional[int] = None
     affiliation_id: Optional[int] = None
+    user_roles: Optional[List[int]] = None
 
     @property
     def get_timeout(self) -> Optional["httpx.Timeout"]:

@@ -7,8 +7,8 @@ from .base import V4Client
 class UsersAPI(V4Client):
     async def all_users(
         self,
-        ids: Optional[List[str]],
-        team_id: Optional[str],
+        ids: Optional[List[str]] = None,
+        team_id: Optional[str] = None,
     ) -> List[User]:
         path = self.make_resource("/users")
         params = dict()

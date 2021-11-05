@@ -2,7 +2,7 @@ import typer
 import asyncio
 import logging
 
-from typing import Optional
+from typing import Optional, List
 from pathlib import Path
 
 from domjudge_tool_cli.models import DomServerClient
@@ -101,10 +101,20 @@ def check(
 def contest_config(
     category_id: Optional[int] = typer.Argument(None, show_default=False),
     affiliation_id: Optional[int] = typer.Argument(None, show_default=False),
+    user_roles: Optional[List[int]] = typer.Option(
+        None,
+        help="ex: role_id,role_id2,role_id3",
+        show_default=False,
+    ),
 ):
     client = get_or_ask_config(general_state["config"])
 
-    update_config(client, category_id=category_id, affiliation_id=affiliation_id)
+    update_config(
+        client,
+        category_id=category_id,
+        affiliation_id=affiliation_id,
+        user_roles=user_roles,
+    )
 
 
 @app.command()

@@ -78,7 +78,11 @@ class WebClient(BaseClient):
         path: str,
         params: Optional[Dict[str, Any]] = None,
     ) -> httpx.Response:
-        r = await self.client.get(path, params=params)  # type: httpx.Response
+        r = await self.client.get(  # type: httpx.Response
+            path,
+            params=params,
+            allow_redirects=True,
+        )
         r.raise_for_status()
         return r
 
@@ -87,7 +91,11 @@ class WebClient(BaseClient):
         path: str,
         body: Dict[str, Any],
     ) -> httpx.Response:
-        r = await self.client.post(path, data=body)  # type: httpx.Response
+        r = await self.client.post(  # type: httpx.Response
+            path,
+            data=body,
+            allow_redirects=True,
+        )
         r.raise_for_status()
         return r
 
