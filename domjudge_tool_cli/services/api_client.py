@@ -35,13 +35,13 @@ class APIClient(BaseClient):
         timeout: Optional[httpx.Timeout] = None,
         limits: Optional[httpx.Limits] = None,
     ):
+        super().__init__(host, disable_ssl, timeout, limits)
         self.username = username
         self.password = password
         self._parameters = dict(
             base_url=host,
             auth=httpx.BasicAuth(username, password),
         )
-        super().__init__(host, disable_ssl, timeout, limits)
 
     @cached_property
     def client(self) -> "httpx.AsyncClient":
