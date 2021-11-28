@@ -4,6 +4,7 @@ from typing import Optional, List
 from domjudge_tool_cli.models import Problem
 from .base import V4Client
 
+
 class ProblemsAPI(V4Client):
     async def all_problems(
         self,

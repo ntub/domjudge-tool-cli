@@ -1,4 +1,12 @@
 [[package]]
+name = "aiofiles"
+version = "0.8.0"
+description = "File support for asyncio."
+category = "main"
+optional = false
+python-versions = ">=3.6,<4.0"
+
+[[package]]
 name = "anyio"
 version = "3.3.0"
 description = "High level compatibility layer for multiple asynchronous event loop implementations"
@@ -717,9 +725,13 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "6d86e386d3c37587f1b42cde46f0fb3da8031db610003a07b15b5bb653c87d43"
+content-hash = "f55a38f518d4108333dc83df837f1f0115e3cd2005d39df09fe36e67dfd06653"
 
 [metadata.files]
+aiofiles = [
+    {file = "aiofiles-0.8.0-py3-none-any.whl", hash = "sha256:7a973fc22b29e9962d0897805ace5856e6a566ab1f0c8e5c91ff6c866519c937"},
+    {file = "aiofiles-0.8.0.tar.gz", hash = "sha256:8334f23235248a3b2e83b2c3a78a22674f39969b96397126cc93664d9a901e59"},
+]
 anyio = [
     {file = "anyio-3.3.0-py3-none-any.whl", hash = "sha256:929a6852074397afe1d989002aa96d457e3e1e5441357c60d03e7eea0e65e1b0"},
     {file = "anyio-3.3.0.tar.gz", hash = "sha256:ae57a67583e5ff8b4af47666ff5651c3732d45fd26c929253748e796af860374"},

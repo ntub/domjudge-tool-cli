@@ -1,6 +1,5 @@
 import httpx
 
-from functools import cached_property
 from typing import Dict, Any, Optional
 
 
@@ -24,6 +23,17 @@ class BaseClient:
         if limits:
             self._parameters["limits"] = limits
 
+        self.client = self.new_client()
+
+    def new_client(self) -> "httpx.AsyncClient":
+        return httpx.AsyncClient(**self._parameters)
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self.client.__aexit__(exc_type, exc_val, exc_tb)
+
 
 class APIClient(BaseClient):
     def __init__(
@@ -42,30 +52,25 @@ class APIClient(BaseClient):
             base_url=host,
             auth=httpx.BasicAuth(username, password),
         )
-
-    @cached_property
-    def client(self) -> "httpx.AsyncClient":
-        return httpx.AsyncClient(**self._parameters)
+        self.client = self.new_client()
 
     async def get(
         self,
         path: str,
         params: Optional[Dict[str, Any]] = None,
     ) -> Any:
-        async with self.client as client:
-            r = await client.get(path, params=params)  # type: httpx.Response
-            r.raise_for_status()
-            return r.json()
+        r = await self.client.get(path, params=params)  # type: httpx.Response
+        r.raise_for_status()
+        return r.json()
 
     async def get_file(
         self,
         path: str,
         params: Optional[Dict[str, Any]] = None,
     ) -> Any:
-        async with self.client as client:
-            r = await client.get(path, params=params)  # type: httpx.Response
-            r.raise_for_status()
-            return r.content
+        r = await self.client.get(path, params=params)  # type: httpx.Response
+        r.raise_for_status()
+        return r.content
 
 
 class WebClient(BaseClient):
@@ -81,7 +86,6 @@ class WebClient(BaseClient):
         self.username = username
         self.password = password
         super().__init__(host, disable_ssl, timeout, limits)
-        self.client = httpx.AsyncClient(**self._parameters)
 
     async def get(
         self,
@@ -108,9 +112,3 @@ class WebClient(BaseClient):
         )
         r.raise_for_status()
         return r
-
-    async def __aenter__(self):
-        return self
-
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.client.__aexit__(exc_type, exc_val, exc_tb)

@@ -1,9 +1,11 @@
-import os
-from io import BytesIO
+import aiofiles
+
 from typing import Optional, List
+from aiofiles import os as aio_os
 
 from domjudge_tool_cli.models import Submission, SubmissionFile
 from .base import V4Client
+
 
 class SubmissionsAPI(V4Client):
     async def all_submissions(
@@ -49,13 +51,14 @@ class SubmissionsAPI(V4Client):
         file_path: Optional[str] = None,
         strict: Optional[bool] = False,
     ) -> any:
-        if not os.path.isdir(file_path):
-            os.makedirs(file_path)
+        is_dir = await aio_os.path.isdir(file_path)
+        if not is_dir:
+            await aio_os.makedirs(file_path, exist_ok=True)
 
         path = self.make_resource(f"/contests/{cid}/submissions/{id}/files")
         result = await self.get_file(path)
-        with open(f'{file_path}/{id}-{filename}.zip', 'wb') as f:
-            f.write(result)
+        async with aiofiles.open(f'{file_path}/{id}-{filename}.zip', 'wb') as f:
+            await f.write(result)
 
     async def submission_file_name(
         self,

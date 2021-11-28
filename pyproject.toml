@@ -16,6 +16,7 @@ pydantic = {extras = ["email", "dotenv"], version = "^1.8.2"}
 tablib = {extras = ["all"], version = "^3.0.0"}
 openpyxl = "^3.0.9"
 beautifulsoup4 = "^4.10.0"
+aiofiles = "^0.8.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

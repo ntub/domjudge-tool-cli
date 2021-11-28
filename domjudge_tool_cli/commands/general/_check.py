@@ -8,8 +8,8 @@ from domjudge_tool_cli.services.v4 import GeneralAPI, DomServerWeb
 
 
 async def get_version(client: DomServerClient):
-    api = GeneralAPI(**client.api_params)
-    version = await api.version()
+    async with GeneralAPI(**client.api_params) as api:
+        version = await api.version()
     message = typer.style(
         f"Success connect API v{version}.",
         fg=typer.colors.GREEN,

@@ -62,8 +62,8 @@ async def get_users(
     format: Optional[UserExportFormat] = None,
     file: Optional[typer.FileBinaryWrite] = None,
 ):
-    api = UsersAPI(**client.api_params)
-    users = await api.all_users(ids, team_id)
+    async with UsersAPI(**client.api_params) as api:
+        users = await api.all_users(ids, team_id)
 
     if ids:
         users = list(filter(lambda obj: obj.id in ids, users))
@@ -81,8 +81,8 @@ async def get_user(
     client: DomServerClient,
     id: str,
 ):
-    api = UsersAPI(**client.api_params)
-    user = await api.get_user(id)
+    async with UsersAPI(**client.api_params) as api:
+        user = await api.get_user(id)
     print_users_table([user])
 
 

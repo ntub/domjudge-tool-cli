@@ -8,10 +8,14 @@ from domjudge_tool_cli.commands.general import (
     general_state,
 )
 
-from ._submissions import get_submissions, download_submission_files, download_contest_files
+from ._submissions import (
+    get_submissions, download_submission_files,
+    download_contest_files,
+)
 
 
 app = typer.Typer()
+
 
 @app.command()
 def submission_list(
@@ -27,6 +31,7 @@ def submission_list(
     client = get_or_ask_config(general_state["config"])
     asyncio.run(get_submissions(client, cid, language_id, strict, submission_ids))
 
+
 @app.command()
 def submission_file(
     cid: str,
@@ -37,6 +42,7 @@ def submission_file(
 ):
     client = get_or_ask_config(general_state["config"])
     asyncio.run(download_submission_files(client, cid, id, mode, path, strict))
+
 
 @app.command()
 def contest_files(

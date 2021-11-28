@@ -3,12 +3,15 @@ import asyncio
 import typer
 
 from typing import Optional, List, Any
-from enum import Enum
-
 from tablib import Dataset
 
 from domjudge_tool_cli.models import Submission, DomServerClient
-from domjudge_tool_cli.services.v4 import SubmissionsAPI, TeamsAPI, ProblemsAPI, DomServerWeb
+from domjudge_tool_cli.services.v4 import (
+    SubmissionsAPI,
+    TeamsAPI,
+    ProblemsAPI,
+)
+
 
 def gen_submission_dataset(submissions: List[Any]) -> Dataset:
     dataset = Dataset()
@@ -20,12 +23,15 @@ def gen_submission_dataset(submissions: List[Any]) -> Dataset:
 
     return dataset
 
+
 def print_submissions_table(submissions: List[Submission]):
     dataset = gen_submission_dataset(submissions)
-    # ["id", "team_id", "problem_id", "language_id", "files", "entry_point", "time", "contest_time", "externalid"]
+    # ["id", "team_id", "problem_id", "language_id",
+    # "files", "entry_point", "time", "contest_time", "externalid"]
     for rm_key in ["externalid", "contest_time"]:
         del dataset[rm_key]
     typer.echo(dataset.export("cli", tablefmt="simple"))
+
 
 def file_path(cid, mode, path, team, problem):
     if mode == 1:
@@ -40,11 +46,13 @@ def file_path(cid, mode, path, team, problem):
 
     return file_path
 
+
 def index_by_id(objs):
-    data  = dict()
+    data = dict()
     for obj in objs:
         data[obj.id] = obj
     return data
+
 
 async def get_submissions(
     client: DomServerClient,
@@ -53,10 +61,11 @@ async def get_submissions(
     strict: Optional[bool] = False,
     ids: Optional[List[str]] = None
 ):
-    api = SubmissionsAPI(**client.api_params)
-    submissions = await api.all_submissions(cid)
+    async with SubmissionsAPI(**client.api_params) as api:
+        submissions = await api.all_submissions(cid)
 
-    print_submissions_table(submissions)
+        print_submissions_table(submissions)
+
 
 async def download_submission_files(
     client: DomServerClient,
@@ -66,22 +75,21 @@ async def download_submission_files(
     path_prefix: Optional[str] = None,
     strict: Optional[bool] = False,
 ):
-    api = SubmissionsAPI(**client.api_params)
-    submission = await api.submission(cid, id)
+    async with SubmissionsAPI(**client.api_params) as api:
+        submission = await api.submission(cid, id)
 
-    team_api = TeamsAPI(**client.api_params)
-    team = await team_api.team(cid, submission.team_id)
+        async with TeamsAPI(**client.api_params) as team_api:
+            team = await team_api.team(cid, submission.team_id)
 
-    problem_api = ProblemsAPI(**client.api_params)
-    problem = await problem_api.problem(cid, submission.problem_id)
+        async with ProblemsAPI(**client.api_params) as problem_api:
+            problem = await problem_api.problem(cid, submission.problem_id)
 
-    api = SubmissionsAPI(**client.api_params)
-    submission_file = await api.submission_file_name(cid, id)
-    submission_filename = submission_file.filename.split('.')[0]
+        submission_file = await api.submission_file_name(cid, id)
+        submission_filename = submission_file.filename.split('.')[0]
 
-    path = file_path(cid, mode, path_prefix, team, problem)
-    api = SubmissionsAPI(**client.api_params)
-    await api.submission_files(cid, id, submission_filename, path)
+        path = file_path(cid, mode, path_prefix, team, problem)
+        await api.submission_files(cid, id, submission_filename, path)
+
 
 async def download_contest_files(
     client: DomServerClient,
@@ -89,26 +97,33 @@ async def download_contest_files(
     mode: int,
     path_prefix: Optional[str] = None,
 ):
-    api = SubmissionsAPI(**client.api_params)
-    submissions = await api.all_submissions(cid)
+    async with SubmissionsAPI(**client.api_params) as api:
+        submissions = await api.all_submissions(cid)
 
-    team_api = TeamsAPI(**client.api_params)
-    teams = await team_api.all_teams(cid)
-    teams_mapping = index_by_id(teams)
+        async with TeamsAPI(**client.api_params) as team_api:
+            teams = await team_api.all_teams(cid)
+            teams_mapping = index_by_id(teams)
 
-    problem_api = ProblemsAPI(**client.api_params)
-    problems = await problem_api.all_problems(cid)
-    problems_mapping = index_by_id(problems)
+        async with ProblemsAPI(**client.api_params) as problem_api:
+            problems = await problem_api.all_problems(cid)
+            problems_mapping = index_by_id(problems)
 
-    for submission in submissions:
-        id = submission.id
-        team = teams_mapping[submission.team_id]
-        problem = problems_mapping[submission.problem_id]
+        async def get_source_codes(submission) -> None:
+            id = submission.id
+            team = teams_mapping[submission.team_id]
+            problem = problems_mapping[submission.problem_id]
 
-        api = SubmissionsAPI(**client.api_params)
-        submission_file = await api.submission_file_name(cid, id)
-        submission_filename = submission_file.filename.split('.')[0]
+            submission_file = await api.submission_file_name(cid, id)
+            submission_filename = submission_file.filename.split('.')[0]
 
-        path = file_path(cid, mode, path_prefix, team, problem)
-        api = SubmissionsAPI(**client.api_params)
-        await api.submission_files(cid, id, submission_filename, path)
+            path = file_path(cid, mode, path_prefix, team, problem)
+            await api.submission_files(cid, id, submission_filename, path)
+
+        tasks = [get_source_codes(it) for it in submissions]
+
+        with typer.progressbar(
+                asyncio.as_completed(tasks),
+                length=len(tasks),
+        ) as progress:
+            for task in progress:
+                await task
