@@ -12,6 +12,6 @@ class Problem(BaseModel):
     time_limit: int
     externalid: str
     name: str
-    rgb: str
-    color: str
+    rgb: Optional[str] = None
+    color: Optional[str] = None
     test_data_count: int
