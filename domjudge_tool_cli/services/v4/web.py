@@ -1,5 +1,6 @@
+import asyncio
 from enum import Enum
-from typing import Tuple, List
+from typing import Tuple, List, Callable
 
 from bs4 import BeautifulSoup
 
@@ -108,3 +109,42 @@ class DomServerWeb(WebClient):
         res.raise_for_status()
 
         assert res.url.path != url, 'User set password fail.'
+
+    async def delete_users(self, include=None):
+        include = include if include else []
+        include = set(map(lambda it: it.lower(), include))
+        res = await self.get(TeamPath.LIST.value)
+        res.raise_for_status()
+
+        soup = BeautifulSoup(res.text, 'html.parser')
+        links = []
+        for row in soup.select('table tbody tr'):
+            name = row.select('a')[0].text.strip()
+            if name.lower() not in include:
+                continue
+
+            link = row.select('a')[-1]['href']
+            links.append(self.post(link))
+
+        for task in asyncio.as_completed(links):
+            res = await task
+            res.raise_for_status()
+
+    async def delete_teams(self, include=None):
+        include = include if include else []
+        include = set(map(lambda it: it.lower(), include))
+        res = await self.get(TeamPath.LIST.value)
+        res.raise_for_status()
+
+        soup = BeautifulSoup(res.text, 'html.parser')
+        links = []
+        for row in soup.select('table tbody tr'):
+            name = row.select('a')[2].text.strip()
+            if name.lower() not in include:
+                continue
+            link = row.select('a')[-2]['href']
+            links.append(self.post(link))
+
+        for task in asyncio.as_completed(links):
+            res = await task
+            res.raise_for_status()

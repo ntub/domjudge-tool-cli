@@ -134,17 +134,29 @@ async def create_teams_and_users(
     password_length: Optional[int] = None,
     password_pattern: Optional[str] = None,
 ) -> None:
-    # api = UsersAPI(**client.api_params)
-    # users = await api.all_users()
+    async with UsersAPI(**client.api_params) as api:
+        users = await api.all_users()
+
+    existing_users = [it.username for it in users]
 
     if not format:
         format = UserExportFormat.CSV
 
     users_requests = []
     users = []
+    delete_users = []
     dataset = Dataset().load(file, format=format.value)
     for item in dataset.dict:
         user = CreateUser(**item)
+
+        if user.username in existing_users:
+            if delete_existing:
+                delete_users.append(user.username)
+
+            if ignore_existing:
+                typer.echo(f"User {user.username} is ignored")
+                continue
+
         users.append(user)
         users_requests.append(
             create_team_and_user(
@@ -158,6 +170,13 @@ async def create_teams_and_users(
                 password_pattern,
             ),
         )
+    if delete_users:
+        async with DomServerWeb(**client.api_params) as web:
+            await web.login()
+            typer.echo("Delete existing users.")
+            await web.delete_users(delete_users)
+            typer.echo("Delete existing teams.")
+            await web.delete_teams(delete_users)
 
     new_users = []
     with typer.progressbar(
@@ -168,6 +187,7 @@ async def create_teams_and_users(
             it = await task
             new_users.append(it)
 
-    file_name = format.export(new_users, name="import-users-teams-out")
-    typer.echo(file_name)
+    if new_users:
+        file_name = format.export(new_users, name="import-users-teams-out")
+        typer.echo(file_name)
 

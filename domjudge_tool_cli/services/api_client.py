@@ -103,7 +103,7 @@ class WebClient(BaseClient):
     async def post(
         self,
         path: str,
-        body: Dict[str, Any],
+        body: Optional[Dict[str, Any]] = None,
     ) -> httpx.Response:
         r = await self.client.post(  # type: httpx.Response
             path,
