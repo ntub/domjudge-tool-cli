@@ -40,6 +40,12 @@ def file_path(cid, mode, path, team, problem):
 
     return file_path
 
+def index_by_id(objs):
+    data  = dict()
+    for obj in objs:
+        data[obj.id] = obj
+    return data
+
 async def get_submissions(
     client: DomServerClient,
     cid: str,
@@ -86,14 +92,19 @@ async def download_contest_files(
     api = SubmissionsAPI(**client.api_params)
     submissions = await api.all_submissions(cid)
 
+    team_api = TeamsAPI(**client.api_params)
+    teams = await team_api.all_teams(cid)
+    teams_mapping = index_by_id(teams)
+
+    problem_api = ProblemsAPI(**client.api_params)
+    problems = await problem_api.all_problems(cid)
+    problems_mapping = index_by_id(problems)
+
     for submission in submissions:
-        team_api = TeamsAPI(**client.api_params)
-        team = await team_api.team(cid, submission.team_id)
-
-        problem_api = ProblemsAPI(**client.api_params)
-        problem = await problem_api.problem(cid, submission.problem_id)
-
         id = submission.id
+        team = teams_mapping[submission.team_id]
+        problem = problems_mapping[submission.problem_id]
+
         api = SubmissionsAPI(**client.api_params)
         submission_file = await api.submission_file_name(cid, id)
         submission_filename = submission_file.filename.split('.')[0]
