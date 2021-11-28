@@ -57,6 +57,16 @@ class APIClient(BaseClient):
             r.raise_for_status()
             return r.json()
 
+    async def get_file(
+        self,
+        path: str,
+        params: Optional[Dict[str, Any]] = None,
+    ) -> Any:
+        async with self.client as client:
+            r = await client.get(path, params=params)  # type: httpx.Response
+            r.raise_for_status()
+            return r.content
+
 
 class WebClient(BaseClient):
     def __init__(
