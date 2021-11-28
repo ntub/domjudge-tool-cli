@@ -6,6 +6,7 @@ from pathlib import Path
 from .commands import (
     general,
     users,
+    scoreboard,
 )
 
 __version__ = "0.1.0"
@@ -14,6 +15,7 @@ app = typer.Typer()
 
 app.add_typer(general.app, name="general")
 app.add_typer(users.app, name="users")
+app.add_typer(scoreboard.app, name="scoreboard")
 
 
 @app.callback()
