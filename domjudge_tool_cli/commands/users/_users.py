@@ -159,7 +159,14 @@ async def create_teams_and_users(
             ),
         )
 
-    new_users = await asyncio.gather(*users_requests)
+    new_users = []
+    with typer.progressbar(
+            asyncio.as_completed(users_requests),
+            length=len(users_requests),
+    ) as progress:
+        for task in progress:
+            it = await task
+            new_users.append(it)
 
     file_name = format.export(new_users, name="import-users-teams-out")
     typer.echo(file_name)
