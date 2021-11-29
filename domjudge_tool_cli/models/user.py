@@ -26,3 +26,4 @@ class CreateUser(BaseModel):
     name: str
     email: Optional[EmailStr] = None
     password: Optional[str] = None
+    affiliation: Optional[str] = None

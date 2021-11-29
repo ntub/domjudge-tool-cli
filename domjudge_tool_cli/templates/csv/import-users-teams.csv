@@ -1,2 +1,2 @@
-username,name,email,password
-ntubuser,test,ntubuser@mail.com,testpassword
+username,name,email,affiliation,password
+ntubuser,test,ntubuser@mail.com,ntub,testpassword

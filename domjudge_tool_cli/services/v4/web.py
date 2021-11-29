@@ -1,11 +1,11 @@
 import asyncio
 from enum import Enum
-from typing import Tuple, List, Callable
+from typing import Tuple, List, Optional
 
 from bs4 import BeautifulSoup
 
 from domjudge_tool_cli.services.api_client import WebClient
-from domjudge_tool_cli.models import CreateUser
+from domjudge_tool_cli.models import CreateUser, Affiliation
 
 
 class HomePath(str, Enum):
@@ -22,6 +22,11 @@ class UserPath(str, Enum):
 class TeamPath(str, Enum):
     LIST = "/jury/teams"
     ADD = "/jury/teams/add"
+
+
+class AffiliationPath(str, Enum):
+    LIST = "/jury/affiliations"
+    ADD = "/jury/affiliations/add"
 
 
 def _get_input_fields(page: str) -> dict:
@@ -113,7 +118,7 @@ class DomServerWeb(WebClient):
     async def delete_users(self, include=None):
         include = include if include else []
         include = set(map(lambda it: it.lower(), include))
-        res = await self.get(TeamPath.LIST.value)
+        res = await self.get(UserPath.LIST.value)
         res.raise_for_status()
 
         soup = BeautifulSoup(res.text, 'html.parser')
@@ -148,3 +153,60 @@ class DomServerWeb(WebClient):
         for task in asyncio.as_completed(links):
             res = await task
             res.raise_for_status()
+
+    async def create_affiliation(
+        self,
+        shortname: str,
+        name: str,
+        country: str = "TWN",
+    ) -> Affiliation:
+        res = await self.get(AffiliationPath.ADD.value)
+
+        data = {
+            **_get_input_fields(res.text),
+            "team_affiliation[shortname]": shortname,
+            "team_affiliation[name]": name,
+            "team_affiliation[country]": country,
+            "team_affiliation[comments]": "",
+        }
+
+        res = await self.post(AffiliationPath.ADD.value, body=data)
+        assert res.url.path != AffiliationPath.ADD.value, "Affiliation create fail."
+        affiliation_id = res.url.path.split("/")[-1]
+
+        return Affiliation(
+            id=affiliation_id,
+            shortname=shortname,
+            name=name,
+            country=country,
+        )
+
+    async def get_affiliations(self) -> List[Affiliation]:
+        res = await self.get(AffiliationPath.LIST.value)
+        res.raise_for_status()
+
+        soup = BeautifulSoup(res.text, 'html.parser')
+        objs = []
+        for row in soup.select('table tbody tr'):
+            affiliation_id = row.select('td a')[0].text.strip()
+            shortname = row.select('td a')[1].text.strip()
+            name = row.select('td a')[2].text.strip()
+            country = row.select('td a')[3].img.get("alt", "").strip()
+            obj = Affiliation(
+                id=affiliation_id,
+                shortname=shortname,
+                name=name,
+                country=country,
+            )
+            objs.append(obj)
+
+        return objs
+
+    async def get_affiliation(self, name) -> Optional[Affiliation]:
+        affiliations = await self.get_affiliations()
+
+        for it in affiliations:
+            if it.name == name or it.shortname == name:
+                return it
+
+        return None

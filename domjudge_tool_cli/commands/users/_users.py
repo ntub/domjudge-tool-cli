@@ -99,9 +99,6 @@ async def create_team_and_user(
     if not category_id:
         category_id = client.category_id
 
-    if not affiliation_id:
-        affiliation_id = client.affiliation_id
-
     if not user_roles:
         user_roles = client.user_roles
 
@@ -110,6 +107,19 @@ async def create_team_and_user(
 
     async with DomServerWeb(**client.api_params) as web:
         await web.login()
+        await asyncio.sleep(1)
+        if not affiliation_id and not user.affiliation:
+            affiliation_id = client.affiliation_id
+        elif user.affiliation:
+            affiliation = await web.get_affiliation(user.affiliation)
+
+            if affiliation:
+                affiliation_id = affiliation.id
+            else:
+                name = user.affiliation
+                affiliation = await web.create_affiliation(name, name)
+                affiliation_id = affiliation.id
+
         team_id, user_id = await web.create_team_and_user(
             user,
             category_id,
@@ -147,6 +157,7 @@ async def create_teams_and_users(
     delete_users = []
     dataset = Dataset().load(file, format=format.value)
     for item in dataset.dict:
+        item["email"] = None if not item.get("email") else item["email"]
         user = CreateUser(**item)
 
         if user.username in existing_users:
@@ -177,6 +188,7 @@ async def create_teams_and_users(
             await web.delete_users(delete_users)
             typer.echo("Delete existing teams.")
             await web.delete_teams(delete_users)
+            await asyncio.sleep(1)
 
     new_users = []
     with typer.progressbar(
