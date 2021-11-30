@@ -119,11 +119,6 @@ async def download_contest_files(
             path = file_path(cid, mode, path_prefix, team, problem)
             await api.submission_files(cid, id, submission_filename, path)
 
-        tasks = [get_source_codes(it) for it in submissions]
-
-        with typer.progressbar(
-                asyncio.as_completed(tasks),
-                length=len(tasks),
-        ) as progress:
+        with typer.progressbar(submissions) as progress:
             for task in progress:
-                await task
+                await get_source_codes(task)

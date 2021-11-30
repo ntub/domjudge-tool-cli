@@ -107,7 +107,6 @@ async def create_team_and_user(
 
     async with DomServerWeb(**client.api_params) as web:
         await web.login()
-        await asyncio.sleep(1)
         if not affiliation_id and not user.affiliation:
             affiliation_id = client.affiliation_id
         elif user.affiliation:
@@ -152,7 +151,6 @@ async def create_teams_and_users(
     if not format:
         format = UserExportFormat.CSV
 
-    users_requests = []
     users = []
     delete_users = []
     dataset = Dataset().load(file, format=format.value)
@@ -169,8 +167,19 @@ async def create_teams_and_users(
                 continue
 
         users.append(user)
-        users_requests.append(
-            create_team_and_user(
+
+    if delete_users:
+        async with DomServerWeb(**client.api_params) as web:
+            await web.login()
+            typer.echo("Delete existing users.")
+            await web.delete_users(delete_users)
+            typer.echo("Delete existing teams.")
+            await web.delete_teams(delete_users)
+
+    new_users = []
+    with typer.progressbar(users) as progress:
+        for user in progress:
+            new_user = await create_team_and_user(
                 client,
                 user,
                 category_id,
@@ -179,25 +188,8 @@ async def create_teams_and_users(
                 enabled,
                 password_length,
                 password_pattern,
-            ),
-        )
-    if delete_users:
-        async with DomServerWeb(**client.api_params) as web:
-            await web.login()
-            typer.echo("Delete existing users.")
-            await web.delete_users(delete_users)
-            typer.echo("Delete existing teams.")
-            await web.delete_teams(delete_users)
-            await asyncio.sleep(1)
-
-    new_users = []
-    with typer.progressbar(
-            asyncio.as_completed(users_requests),
-            length=len(users_requests),
-    ) as progress:
-        for task in progress:
-            it = await task
-            new_users.append(it)
+            )
+            new_users.append(new_user)
 
     if new_users:
         file_name = format.export(new_users, name="import-users-teams-out")
