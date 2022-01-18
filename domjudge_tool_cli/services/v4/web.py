@@ -105,15 +105,15 @@ class DomServerWeb(WebClient):
 
         data = {
             **_get_input_fields(res.text),
-            'user[plainPassword]': password,
-            'user[enabled]': "1" if enabled else "0",
-            'user[user_roles][]': user_roles_data,
+            "user[plainPassword]": password,
+            "user[enabled]": "1" if enabled else "0",
+            "user[user_roles][]": user_roles_data,
         }
 
         res = await self.post(url, body=data)
         res.raise_for_status()
 
-        assert res.url.path != url, 'User set password fail.'
+        assert res.url.path != url, "User set password fail."
 
     async def delete_users(self, include=None):
         include = include if include else []
@@ -121,14 +121,14 @@ class DomServerWeb(WebClient):
         res = await self.get(UserPath.LIST.value)
         res.raise_for_status()
 
-        soup = BeautifulSoup(res.text, 'html.parser')
+        soup = BeautifulSoup(res.text, "html.parser")
         links = []
-        for row in soup.select('table tbody tr'):
-            name = row.select('a')[0].text.strip()
+        for row in soup.select("table tbody tr"):
+            name = row.select("a")[0].text.strip()
             if name.lower() not in include:
                 continue
 
-            link = row.select('a')[-1]['href']
+            link = row.select("a")[-1]["href"]
             links.append(self.post(link))
 
         for task in asyncio.as_completed(links):
@@ -141,13 +141,13 @@ class DomServerWeb(WebClient):
         res = await self.get(TeamPath.LIST.value)
         res.raise_for_status()
 
-        soup = BeautifulSoup(res.text, 'html.parser')
+        soup = BeautifulSoup(res.text, "html.parser")
         links = []
-        for row in soup.select('table tbody tr'):
-            name = row.select('a')[2].text.strip()
+        for row in soup.select("table tbody tr"):
+            name = row.select("a")[2].text.strip()
             if name.lower() not in include:
                 continue
-            link = row.select('a')[-2]['href']
+            link = row.select("a")[-2]["href"]
             links.append(self.post(link))
 
         for task in asyncio.as_completed(links):
@@ -185,13 +185,13 @@ class DomServerWeb(WebClient):
         res = await self.get(AffiliationPath.LIST.value)
         res.raise_for_status()
 
-        soup = BeautifulSoup(res.text, 'html.parser')
+        soup = BeautifulSoup(res.text, "html.parser")
         objs = []
-        for row in soup.select('table tbody tr'):
-            affiliation_id = row.select('td a')[0].text.strip()
-            shortname = row.select('td a')[1].text.strip()
-            name = row.select('td a')[2].text.strip()
-            country = row.select('td a')[3].img.get("alt", "").strip()
+        for row in soup.select("table tbody tr"):
+            affiliation_id = row.select("td a")[0].text.strip()
+            shortname = row.select("td a")[1].text.strip()
+            name = row.select("td a")[2].text.strip()
+            country = row.select("td a")[3].img.get("alt", "").strip()
             obj = Affiliation(
                 id=affiliation_id,
                 shortname=shortname,

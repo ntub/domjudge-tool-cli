@@ -9,7 +9,8 @@ from domjudge_tool_cli.commands.general import (
 )
 
 from ._submissions import (
-    get_submissions, download_submission_files,
+    get_submissions,
+    download_submission_files,
     download_contest_files,
 )
 

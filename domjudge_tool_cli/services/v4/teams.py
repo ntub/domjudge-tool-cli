@@ -14,11 +14,7 @@ class TeamsAPI(V4Client):
         result = await self.get(path)
         return list(map(lambda it: Team(**it), result))
 
-    async def team(
-        self,
-        cid: str,
-        id: str
-    ) -> Team:
+    async def team(self, cid: str, id: str) -> Team:
         path = self.make_resource(f"/contests/{cid}/teams/{id}")
         result = await self.get(path)
         return Team(**result)

@@ -14,11 +14,7 @@ class ProblemsAPI(V4Client):
         result = await self.get(path)
         return list(map(lambda it: Problem(**it), result))
 
-    async def problem(
-        self,
-        cid: str,
-        id: str
-    ) -> Problem:
+    async def problem(self, cid: str, id: str) -> Problem:
         path = self.make_resource(f"/contests/{cid}/problems/{id}")
         result = await self.get(path)
         return Problem(**result)

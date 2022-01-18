@@ -4,6 +4,7 @@ from pydantic import (
     BaseModel,
 )
 
+
 class Submission(BaseModel):
     language_id: Optional[str]
     time: Optional[str]
@@ -17,6 +18,7 @@ class Submission(BaseModel):
     submission_id: Optional[str]
     filename: Optional[str]
     source: Optional[str]
+
 
 class SubmissionFile(BaseModel):
     id: str

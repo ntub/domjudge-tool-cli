@@ -4,6 +4,7 @@ from pydantic import (
     BaseModel,
 )
 
+
 class Team(BaseModel):
     group_ids: List[str]
     affiliation: Optional[str]

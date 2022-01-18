@@ -13,7 +13,7 @@ class SubmissionsAPI(V4Client):
         cid: str,
         language_id: Optional[str] = None,
         strict: Optional[bool] = False,
-        ids: Optional[List[str]] = None
+        ids: Optional[List[str]] = None,
     ) -> List[Submission]:
         path = self.make_resource(f"/contests/{cid}/submissions")
         params = dict()
@@ -34,11 +34,7 @@ class SubmissionsAPI(V4Client):
 
         return list(map(lambda it: Submission(**it), result))
 
-    async def submission(
-        self,
-        cid: str,
-        id: str
-    ) -> Submission:
+    async def submission(self, cid: str, id: str) -> Submission:
         path = self.make_resource(f"/contests/{cid}/submissions/{id}")
         result = await self.get(path)
         return Submission(**result)
@@ -57,7 +53,7 @@ class SubmissionsAPI(V4Client):
 
         path = self.make_resource(f"/contests/{cid}/submissions/{id}/files")
         result = await self.get_file(path)
-        async with aiofiles.open(f'{file_path}/{id}-{filename}.zip', 'wb') as f:
+        async with aiofiles.open(f"{file_path}/{id}-{filename}.zip", "wb") as f:
             await f.write(result)
 
     async def submission_file_name(

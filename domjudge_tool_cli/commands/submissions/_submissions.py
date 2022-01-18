@@ -59,7 +59,7 @@ async def get_submissions(
     cid: str,
     language_id: Optional[str] = None,
     strict: Optional[bool] = False,
-    ids: Optional[List[str]] = None
+    ids: Optional[List[str]] = None,
 ):
     async with SubmissionsAPI(**client.api_params) as api:
         submissions = await api.all_submissions(cid)
@@ -85,7 +85,7 @@ async def download_submission_files(
             problem = await problem_api.problem(cid, submission.problem_id)
 
         submission_file = await api.submission_file_name(cid, id)
-        submission_filename = submission_file.filename.split('.')[0]
+        submission_filename = submission_file.filename.split(".")[0]
 
         path = file_path(cid, mode, path_prefix, team, problem)
         await api.submission_files(cid, id, submission_filename, path)
@@ -114,7 +114,7 @@ async def download_contest_files(
             problem = problems_mapping[submission.problem_id]
 
             submission_file = await api.submission_file_name(cid, id)
-            submission_filename = submission_file.filename.split('.')[0]
+            submission_filename = submission_file.filename.split(".")[0]
 
             path = file_path(cid, mode, path_prefix, team, problem)
             await api.submission_files(cid, id, submission_filename, path)
