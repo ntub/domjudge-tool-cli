@@ -1,14 +1,12 @@
 import asyncio
+from enum import Enum
+from typing import Any, List, Optional
 
 import typer
-
-from typing import Optional, List, Any
-from enum import Enum
-
 from tablib import Dataset
 
-from domjudge_tool_cli.models import User, DomServerClient, CreateUser
-from domjudge_tool_cli.services.v4 import UsersAPI, DomServerWeb
+from domjudge_tool_cli.models import CreateUser, DomServerClient, User
+from domjudge_tool_cli.services.v4 import DomServerWeb, UsersAPI
 from domjudge_tool_cli.utils.password import gen_password
 
 

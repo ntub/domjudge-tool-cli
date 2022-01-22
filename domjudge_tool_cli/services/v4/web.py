@@ -1,11 +1,11 @@
 import asyncio
 from enum import Enum
-from typing import Tuple, List, Optional
+from typing import List, Optional, Tuple
 
 from bs4 import BeautifulSoup
 
+from domjudge_tool_cli.models import Affiliation, CreateUser
 from domjudge_tool_cli.services.api_client import WebClient
-from domjudge_tool_cli.models import CreateUser, Affiliation
 
 
 class HomePath(str, Enum):

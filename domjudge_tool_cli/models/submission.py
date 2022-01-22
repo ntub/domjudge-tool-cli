@@ -1,8 +1,6 @@
 from typing import Dict, List, Optional
 
-from pydantic import (
-    BaseModel,
-)
+from pydantic import BaseModel
 
 
 class Submission(BaseModel):

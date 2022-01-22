@@ -1,16 +1,11 @@
 import asyncio
+from typing import Any, List, Optional
 
 import typer
-
-from typing import Optional, List, Any
 from tablib import Dataset
 
-from domjudge_tool_cli.models import Submission, DomServerClient
-from domjudge_tool_cli.services.v4 import (
-    SubmissionsAPI,
-    TeamsAPI,
-    ProblemsAPI,
-)
+from domjudge_tool_cli.models import DomServerClient, Submission
+from domjudge_tool_cli.services.v4 import ProblemsAPI, SubmissionsAPI, TeamsAPI
 
 
 def gen_submission_dataset(submissions: List[Any]) -> Dataset:

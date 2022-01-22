@@ -1,9 +1,10 @@
-import aiofiles
+from typing import List, Optional
 
-from typing import Optional, List
+import aiofiles
 from aiofiles import os as aio_os
 
 from domjudge_tool_cli.models import Submission, SubmissionFile
+
 from .base import V4Client
 
 

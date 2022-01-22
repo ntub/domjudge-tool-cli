@@ -1,12 +1,11 @@
-import os
-import typer
-import httpx
 import csv
+from typing import Optional
 
-from enum import Enum
-from typing import Optional, Tuple, List
-
+import httpx
+import typer
 from bs4 import BeautifulSoup
+
+from domjudge_tool_cli.commands.general import general_state, get_or_ask_config
 
 app = typer.Typer()
 
@@ -57,14 +56,18 @@ def summary(element):
 
 @app.command()
 def export(
-    url: str,
+    cid: int,
     filename: str = "export",
-    cid: Optional[str] = None,
+    url: Optional[str] = None,
     path_prefix: Optional[str] = None,
 ):
+    if not url:
+        client = get_or_ask_config(general_state["config"])
+        url = f"{client.host}/public?static=1"
+
     cookies = None
     if cid:
-        cookies = {"domjudge_cid": cid}
+        cookies = {"domjudge_cid": f"{cid}"}
 
     res = httpx.get(url, cookies=cookies).content
     soup = BeautifulSoup(res, "html.parser")

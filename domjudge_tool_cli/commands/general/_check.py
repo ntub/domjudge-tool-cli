@@ -1,10 +1,10 @@
+from pathlib import Path
+from typing import Any, Dict, Optional
+
 import typer
 
-from typing import Optional, Dict, Any
-from pathlib import Path
-
 from domjudge_tool_cli.models import DomServerClient
-from domjudge_tool_cli.services.v4 import GeneralAPI, DomServerWeb
+from domjudge_tool_cli.services.v4 import DomServerWeb, GeneralAPI
 
 
 async def get_version(client: DomServerClient):

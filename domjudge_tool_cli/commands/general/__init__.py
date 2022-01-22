@@ -1,20 +1,19 @@
-import typer
 import asyncio
 import logging
-
-from typing import Optional, List
 from pathlib import Path
+from typing import List, Optional
+
+import typer
 
 from domjudge_tool_cli.models import DomServerClient
 
 from ._check import (
-    get_version,
-    create_config,
-    read_config,
     check_login_website,
+    create_config,
+    get_version,
+    read_config,
     update_config,
 )
-
 
 app = typer.Typer()
 general_state = {

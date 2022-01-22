@@ -1,10 +1,9 @@
+from .affiliation import Affiliation
 from .domserver import DomServerClient
-from .user import User, CreateUser
+from .problem import Problem
 from .submission import Submission, SubmissionFile
 from .team import Team
-from .problem import Problem
-from .affiliation import Affiliation
-
+from .user import CreateUser, User
 
 __all__ = (
     "DomServerClient",

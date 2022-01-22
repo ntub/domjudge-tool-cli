@@ -1,6 +1,7 @@
-from typing import Optional, List
+from typing import List, Optional
 
 from domjudge_tool_cli.models import User
+
 from .base import V4Client
 
 

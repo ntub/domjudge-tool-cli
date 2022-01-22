@@ -1,10 +1,9 @@
 from .general import GeneralAPI
-from .users import UsersAPI
-from .web import DomServerWeb
+from .problems import ProblemsAPI
 from .submissions import SubmissionsAPI
 from .teams import TeamsAPI
-from .problems import ProblemsAPI
-
+from .users import UsersAPI
+from .web import DomServerWeb
 
 __all__ = (
     "GeneralAPI",

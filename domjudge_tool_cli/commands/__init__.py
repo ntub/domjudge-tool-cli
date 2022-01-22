@@ -1,9 +1,4 @@
-from domjudge_tool_cli.commands import (
-    general,
-    users,
-    scoreboard,
-    submissions,
-)
+from domjudge_tool_cli.commands import general, scoreboard, submissions, users
 
 __all__ = (
     "general",

@@ -1,14 +1,9 @@
+from pathlib import Path
+from typing import Optional
+
 import typer
 
-from typing import Optional
-from pathlib import Path
-
-from .commands import (
-    general,
-    users,
-    scoreboard,
-    submissions,
-)
+from .commands import general, scoreboard, submissions, users
 
 __version__ = "0.1.0"
 

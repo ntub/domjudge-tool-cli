@@ -1,9 +1,6 @@
 from typing import List, Optional
 
-from pydantic import (
-    BaseModel,
-    EmailStr,
-)
+from pydantic import BaseModel, EmailStr
 
 
 class User(BaseModel):

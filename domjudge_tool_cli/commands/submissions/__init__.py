@@ -1,19 +1,15 @@
-import typer
 import asyncio
+from typing import List, Optional
 
-from typing import Optional, List
+import typer
 
-from domjudge_tool_cli.commands.general import (
-    get_or_ask_config,
-    general_state,
-)
+from domjudge_tool_cli.commands.general import general_state, get_or_ask_config
 
 from ._submissions import (
-    get_submissions,
-    download_submission_files,
     download_contest_files,
+    download_submission_files,
+    get_submissions,
 )
-
 
 app = typer.Typer()
 

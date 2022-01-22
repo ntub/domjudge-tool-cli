@@ -1,21 +1,17 @@
+import asyncio
 import os
+from typing import List, Optional
 
 import typer
-import asyncio
 
-from typing import Optional, List
-
-from domjudge_tool_cli.commands.general import (
-    get_or_ask_config,
-    general_state,
-)
+from domjudge_tool_cli.commands.general import general_state, get_or_ask_config
 
 from ._users import (
     UserExportFormat,
-    get_users,
-    get_user,
     create_teams_and_users,
     delete_teams_and_users,
+    get_user,
+    get_users,
 )
 
 app = typer.Typer()
