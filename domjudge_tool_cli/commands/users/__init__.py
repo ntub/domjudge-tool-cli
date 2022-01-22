@@ -10,8 +10,13 @@ from domjudge_tool_cli.commands.general import (
     general_state,
 )
 
-from ._users import UserExportFormat, get_users, get_user, create_teams_and_users
-
+from ._users import (
+    UserExportFormat,
+    get_users,
+    get_user,
+    create_teams_and_users,
+    delete_teams_and_users,
+)
 
 app = typer.Typer()
 
@@ -91,5 +96,20 @@ def import_users_teams(
             delete_existing,
             password_length,
             password_pattern,
+        ),
+    )
+
+
+@app.command()
+def rm_teams_and_users(
+    include: Optional[List[str]] = typer.Option(None),
+    exclude: Optional[List[str]] = typer.Option(None),
+):
+    client = get_or_ask_config(general_state["config"])
+    asyncio.run(
+        delete_teams_and_users(
+            client,
+            include,
+            exclude,
         ),
     )

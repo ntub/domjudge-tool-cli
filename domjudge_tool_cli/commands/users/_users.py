@@ -194,3 +194,37 @@ async def create_teams_and_users(
     if new_users:
         file_name = format.export(new_users, name="import-users-teams-out")
         typer.echo(file_name)
+
+
+async def delete_teams_and_users(
+    client: DomServerClient,
+    include: Optional[List[str]] = None,
+    exclude: Optional[List[str]] = None,
+) -> None:
+    default_ignore_users = ["admin", "judgehost", client.username]
+
+    async with UsersAPI(**client.api_params) as api:
+        users = await api.all_users()
+
+    existing_users = [it.username for it in users]
+
+    if not exclude:
+        exclude = default_ignore_users
+
+    if not include:
+        include = existing_users
+
+    if include:
+        include = list(
+            filter(
+                lambda it: it not in default_ignore_users,
+                include,
+            )
+        )
+
+    async with DomServerWeb(**client.api_params) as web:
+        await web.login()
+        typer.echo("Delete users.")
+        await web.delete_users(include, exclude)
+        typer.echo("Delete teams.")
+        await web.delete_teams(include, exclude)

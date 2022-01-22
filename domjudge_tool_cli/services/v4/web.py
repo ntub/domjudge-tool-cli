@@ -115,9 +115,11 @@ class DomServerWeb(WebClient):
 
         assert res.url.path != url, "User set password fail."
 
-    async def delete_users(self, include=None):
+    async def delete_users(self, include=None, exclude=None):
         include = include if include else []
         include = set(map(lambda it: it.lower(), include))
+        exclude = exclude if exclude else []
+        exclude = set(map(lambda it: it.lower(), exclude))
         res = await self.get(UserPath.LIST.value)
         res.raise_for_status()
 
@@ -125,7 +127,8 @@ class DomServerWeb(WebClient):
         links = []
         for row in soup.select("table tbody tr"):
             name = row.select("a")[0].text.strip()
-            if name.lower() not in include:
+            lower_name = name.lower()
+            if lower_name not in include or lower_name in exclude:
                 continue
 
             link = row.select("a")[-1]["href"]
@@ -135,9 +138,11 @@ class DomServerWeb(WebClient):
             res = await task
             res.raise_for_status()
 
-    async def delete_teams(self, include=None):
+    async def delete_teams(self, include=None, exclude=None):
         include = include if include else []
         include = set(map(lambda it: it.lower(), include))
+        exclude = exclude if exclude else []
+        exclude = set(map(lambda it: it.lower(), exclude))
         res = await self.get(TeamPath.LIST.value)
         res.raise_for_status()
 
@@ -145,7 +150,8 @@ class DomServerWeb(WebClient):
         links = []
         for row in soup.select("table tbody tr"):
             name = row.select("a")[2].text.strip()
-            if name.lower() not in include:
+            lower_name = name.lower()
+            if lower_name not in include or lower_name in exclude:
                 continue
             link = row.select("a")[-2]["href"]
             links.append(self.post(link))
