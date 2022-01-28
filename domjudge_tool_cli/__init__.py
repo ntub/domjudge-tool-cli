@@ -3,7 +3,7 @@ from typing import Optional
 
 import typer
 
-from .commands import general, scoreboard, submissions, users
+from .commands import general, problems, scoreboard, submissions, users
 
 __version__ = "0.1.0"
 
@@ -13,6 +13,7 @@ app.add_typer(general.app, name="general")
 app.add_typer(users.app, name="users")
 app.add_typer(scoreboard.app, name="scoreboard")
 app.add_typer(submissions.app, name="submissions")
+app.add_typer(problems.app, name="problems")
 
 
 @app.callback()

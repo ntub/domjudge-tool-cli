@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple
 
 from bs4 import BeautifulSoup
 
-from domjudge_tool_cli.models import Affiliation, CreateUser
+from domjudge_tool_cli.models import Affiliation, CreateUser, ProblemItem
 from domjudge_tool_cli.services.api_client import WebClient
 
 
@@ -27,6 +27,11 @@ class TeamPath(str, Enum):
 class AffiliationPath(str, Enum):
     LIST = "/jury/affiliations"
     ADD = "/jury/affiliations/add"
+
+
+class ProblemPath(str, Enum):
+    LIST = "/jury/problems"
+    ADD = "/jury/problems/add"
 
 
 def _get_input_fields(page: str) -> dict:
@@ -216,3 +221,33 @@ class DomServerWeb(WebClient):
                 return it
 
         return None
+
+    async def get_problems(
+        self,
+        exclude: Optional[List[str]] = None,
+    ) -> List[ProblemItem]:
+        res = await self.get(ProblemPath.LIST.value)
+        res.raise_for_status()
+
+        soup = BeautifulSoup(res.text, "html.parser")
+        objs = []
+        for row in soup.select("table tbody tr"):
+            problem_id = row.select("td a")[0].text.strip()
+            name = row.select("td a")[1].text.strip()
+            time_limit = row.select("td a")[3].text.strip()
+            test_data_count = row.select("td a")[6].text.strip()
+            export_file_path = str(row.select("td a")[8]['href']).strip()
+
+            if problem_id in exclude:
+                continue
+
+            obj = ProblemItem(
+                id=problem_id,
+                name=name,
+                time_limit=time_limit,
+                test_data_count=test_data_count,
+                export_file_path=export_file_path,
+            )
+            objs.append(obj)
+
+        return objs

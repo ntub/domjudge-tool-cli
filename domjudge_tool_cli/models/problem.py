@@ -14,3 +14,11 @@ class Problem(BaseModel):
     rgb: Optional[str] = None
     color: Optional[str] = None
     test_data_count: int
+
+
+class ProblemItem(BaseModel):
+    id: str
+    time_limit: int
+    test_data_count: int
+    name: str
+    export_file_path: Optional[str]
