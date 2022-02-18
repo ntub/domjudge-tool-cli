@@ -236,7 +236,7 @@ class DomServerWeb(WebClient):
             name = row.select("td a")[1].text.strip()
             time_limit = row.select("td a")[3].text.strip()
             test_data_count = row.select("td a")[6].text.strip()
-            export_file_path = str(row.select("td a")[7]['href']).strip()
+            export_file_path = str(row.select("td a")[7]["href"]).strip()
 
             if problem_id in exclude:
                 continue

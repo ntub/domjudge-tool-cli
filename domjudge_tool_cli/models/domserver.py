@@ -14,6 +14,7 @@ class DomServerClient(BaseModel):
     max_keepalive_connections: Optional[int] = None
     category_id: Optional[int] = None
     affiliation_id: Optional[int] = None
+    affiliation_country: Optional[str] = "TWN"
     user_roles: Optional[List[int]] = None
 
     @property

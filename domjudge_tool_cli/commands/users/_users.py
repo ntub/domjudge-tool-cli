@@ -1,8 +1,8 @@
-import asyncio
+import typer
+
 from enum import Enum
 from typing import Any, List, Optional
 
-import typer
 from tablib import Dataset
 
 from domjudge_tool_cli.models import CreateUser, DomServerClient, User
@@ -114,7 +114,11 @@ async def create_team_and_user(
                 affiliation_id = affiliation.id
             else:
                 name = user.affiliation
-                affiliation = await web.create_affiliation(name, name)
+                affiliation = await web.create_affiliation(
+                    name,
+                    name,
+                    client.affiliation_country,
+                )
                 affiliation_id = affiliation.id
 
         team_id, user_id = await web.create_team_and_user(
@@ -149,9 +153,14 @@ async def create_teams_and_users(
     if not format:
         format = UserExportFormat.CSV
 
+    input_file = file
+    if format == UserExportFormat.CSV:
+        input_file = file.read().replace("\ufeff", "")
+
     users = []
     delete_users = []
-    dataset = Dataset().load(file, format=format.value)
+    dataset = Dataset().load(input_file, format=format.value)
+
     for item in dataset.dict:
         item["email"] = None if not item.get("email") else item["email"]
         user = CreateUser(**item)

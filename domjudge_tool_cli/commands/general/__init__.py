@@ -7,8 +7,13 @@ import typer
 
 from domjudge_tool_cli.models import DomServerClient
 
-from ._check import (check_login_website, create_config, get_version,
-                     read_config, update_config)
+from ._check import (
+    check_login_website,
+    create_config,
+    get_version,
+    read_config,
+    update_config,
+)
 
 app = typer.Typer()
 general_state = {

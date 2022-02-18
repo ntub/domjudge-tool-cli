@@ -6,8 +6,13 @@ import typer
 
 from domjudge_tool_cli.commands.general import general_state, get_or_ask_config
 
-from ._users import (UserExportFormat, create_teams_and_users,
-                     delete_teams_and_users, get_user, get_users)
+from ._users import (
+    UserExportFormat,
+    create_teams_and_users,
+    delete_teams_and_users,
+    get_user,
+    get_users,
+)
 
 app = typer.Typer()
 
