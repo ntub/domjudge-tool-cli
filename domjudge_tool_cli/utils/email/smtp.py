@@ -1,6 +1,5 @@
 import smtplib
-
-from typing import Optional, Union, Type, List, Dict, Any, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 from domjudge_tool_cli.utils.email.helper import EmailContext
 

@@ -3,7 +3,7 @@ from typing import Optional
 
 import typer
 
-from .commands import general, problems, scoreboard, submissions, users, emails
+from .commands import emails, general, problems, scoreboard, submissions, users
 
 __version__ = "0.1.0"
 

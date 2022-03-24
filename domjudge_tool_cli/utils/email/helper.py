@@ -1,12 +1,11 @@
 import os
-
-from string import Template
-from io import TextIOWrapper
-from pathlib import Path
-from typing import Optional, Union, Tuple, List, Dict, Any
-from enum import Enum
 from email.mime.text import MIMEText
 from email.utils import formataddr, formatdate, getaddresses, make_msgid
+from enum import Enum
+from io import TextIOWrapper
+from pathlib import Path
+from string import Template
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 
 class FileType(str, Enum):

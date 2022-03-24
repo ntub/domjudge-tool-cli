@@ -1,11 +1,10 @@
 from typing import Optional, Union
 
+import typer
 from tablib import Dataset
 
-import typer
-
-from domjudge_tool_cli.utils.email import helper, smtp
 from domjudge_tool_cli.models import CreateUser
+from domjudge_tool_cli.utils.email import helper, smtp
 
 app = typer.Typer()
 

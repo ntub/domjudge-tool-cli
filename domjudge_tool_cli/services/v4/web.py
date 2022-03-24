@@ -4,7 +4,7 @@ from typing import List, Optional, Tuple
 
 from bs4 import BeautifulSoup
 
-from domjudge_tool_cli.models import Affiliation, CreateUser, ProblemItem
+from domjudge_tool_cli.models import Affiliation, CreateUser, ProblemItem, User
 from domjudge_tool_cli.services.api_client import WebClient
 
 
@@ -22,6 +22,7 @@ class UserPath(str, Enum):
 class TeamPath(str, Enum):
     LIST = "/jury/teams"
     ADD = "/jury/teams/add"
+    EDIT = "/jury/teams/%s/edit"
 
 
 class AffiliationPath(str, Enum):
@@ -84,7 +85,42 @@ class DomServerWeb(WebClient):
             data.pop("team[contests][]")
 
         res = await self.post(TeamPath.ADD.value, body=data)
-        assert res.url.path != TeamPath.ADD.value, "Team create fail."
+        assert res.url.path != TeamPath.ADD.value, f"Team create fail. {user.username}"
+        team_id = res.url.path.split("/")[-1]
+
+        res = await self.get(res.url.path)  # Go to team view page.
+
+        soup = BeautifulSoup(res.text, "html.parser")
+        user_link = soup.select_one(".container-fluid a")
+        user_id = user_link["href"].split("/")[-1]
+
+        return team_id, user_id
+
+    async def update_team(
+        self,
+        user: User,
+        category_id: int,
+        affiliation_id: int,
+        enabled: bool = True,
+    ) -> Tuple[str, str]:
+        url = TeamPath.EDIT.value % user.team_id
+
+        res = await self.get(url)
+
+        data = {
+            **_get_input_fields(res.text),
+            "team[name]": user.username,
+            "team[displayName]": user.name,
+            "team[affiliation]": str(affiliation_id),
+            "team[enabled]": "1" if enabled else "0",
+            "team[category]": str(category_id),
+        }
+
+        if "team[contests][]" in data and data["team[contests][]"] is None:
+            data.pop("team[contests][]")
+
+        res = await self.post(url, body=data)
+        assert res.url.path != url, f"Team update fail. {user.username}"
         team_id = res.url.path.split("/")[-1]
 
         res = await self.get(res.url.path)  # Go to team view page.
@@ -118,7 +154,7 @@ class DomServerWeb(WebClient):
         res = await self.post(url, body=data)
         res.raise_for_status()
 
-        assert res.url.path != url, "User set password fail."
+        assert res.url.path != url, f"User set password fail. {user_id}"
 
     async def delete_users(self, include=None, exclude=None):
         include = include if include else []
@@ -139,7 +175,7 @@ class DomServerWeb(WebClient):
             link = row.select("a")[-1]["href"]
             links.append(self.post(link))
 
-        for task in asyncio.as_completed(links):
+        for task in links:
             res = await task
             res.raise_for_status()
 
@@ -161,7 +197,7 @@ class DomServerWeb(WebClient):
             link = row.select("a")[-2]["href"]
             links.append(self.post(link))
 
-        for task in asyncio.as_completed(links):
+        for task in links:
             res = await task
             res.raise_for_status()
 

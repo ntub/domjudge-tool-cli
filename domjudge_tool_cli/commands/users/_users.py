@@ -1,8 +1,7 @@
-import typer
-
 from enum import Enum
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
+import typer
 from tablib import Dataset
 
 from domjudge_tool_cli.models import CreateUser, DomServerClient, User
@@ -86,7 +85,7 @@ async def get_user(
 
 async def create_team_and_user(
     client: DomServerClient,
-    user: CreateUser,
+    user: Union[CreateUser, User],
     category_id: Optional[int] = None,
     affiliation_id: Optional[int] = None,
     user_roles: Optional[List[int]] = None,
@@ -121,12 +120,22 @@ async def create_team_and_user(
                 )
                 affiliation_id = affiliation.id
 
-        team_id, user_id = await web.create_team_and_user(
-            user,
-            category_id,
-            affiliation_id,
-            enabled,
-        )
+        if isinstance(user, User):
+            team_id, user_id = await web.update_team(
+                user,
+                category_id,
+                affiliation_id,
+                enabled,
+            )
+            user = CreateUser.from_user(user)
+        else:
+            team_id, user_id = await web.create_team_and_user(
+                user,
+                category_id,
+                affiliation_id,
+                enabled,
+            )
+
         await web.set_user_password(user_id, user.password, user_roles, enabled)
 
         return user
@@ -148,7 +157,7 @@ async def create_teams_and_users(
     async with UsersAPI(**client.api_params) as api:
         users = await api.all_users()
 
-    existing_users = [it.username for it in users]
+    existing_users: Dict[str, User] = {it.username.lower(): it for it in users}
 
     if not format:
         format = UserExportFormat.CSV
@@ -165,12 +174,20 @@ async def create_teams_and_users(
         item["email"] = None if not item.get("email") else item["email"]
         user = CreateUser(**item)
 
-        if user.username in existing_users:
+        username = user.username.lower()
+        if username in existing_users:
+            existing_user = existing_users[username]
+
             if delete_existing:
-                delete_users.append(user.username)
+                delete_users.append(existing_user.username)
 
             if ignore_existing:
                 typer.echo(f"User {user.username} is ignored")
+                continue
+
+            if not delete_existing and not ignore_existing:
+                existing_user.update(**item)
+                users.append(existing_user)
                 continue
 
         users.append(user)
