@@ -1,4 +1,6 @@
 from .general import GeneralAPI
+from .judgement_types import JudgementTypeAPI
+from .judgements import JudgementAPI
 from .problems import ProblemsAPI
 from .submissions import SubmissionsAPI
 from .teams import TeamsAPI
@@ -12,4 +14,6 @@ __all__ = (
     "SubmissionsAPI",
     "TeamsAPI",
     "ProblemsAPI",
+    "JudgementAPI",
+    "JudgementTypeAPI",
 )

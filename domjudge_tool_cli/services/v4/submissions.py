@@ -4,8 +4,7 @@ import aiofiles
 from aiofiles import os as aio_os
 
 from domjudge_tool_cli.models import Submission, SubmissionFile
-
-from .base import V4Client
+from domjudge_tool_cli.services.v4.base import V4Client
 
 
 class SubmissionsAPI(V4Client):

@@ -1,11 +1,16 @@
-import asyncio
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import typer
 from tablib import Dataset
 
 from domjudge_tool_cli.models import DomServerClient, Submission
-from domjudge_tool_cli.services.v4 import ProblemsAPI, SubmissionsAPI, TeamsAPI
+from domjudge_tool_cli.services.v4 import (
+    JudgementAPI,
+    JudgementTypeAPI,
+    ProblemsAPI,
+    SubmissionsAPI,
+    TeamsAPI,
+)
 
 
 def gen_submission_dataset(submissions: List[Any]) -> Dataset:
@@ -49,27 +54,53 @@ def index_by_id(objs):
     return data
 
 
+async def judgement_submission_mapping(
+        client: DomServerClient,
+        cid: str,
+) -> Dict[str, str]:
+    async with JudgementTypeAPI(**client.api_params) as api:
+        judgement_types = await api.all_judgement_types(cid)
+
+    async with JudgementAPI(**client.api_params) as api:
+        judgements = await api.all_judgements(cid)
+
+    judgement_type_mapping = {
+        item.id: str(item.name).lower().replace(" ", "_")
+        for item in judgement_types
+    }
+    return {
+        item.submission_id: judgement_type_mapping.get(item.judgement_type_id)
+        for item in judgements
+    }
+
+
 async def get_submissions(
-    client: DomServerClient,
-    cid: str,
-    language_id: Optional[str] = None,
-    strict: Optional[bool] = False,
-    ids: Optional[List[str]] = None,
+        client: DomServerClient,
+        cid: str,
+        language_id: Optional[str] = None,
+        strict: Optional[bool] = False,
+        ids: Optional[List[str]] = None,
 ):
     async with SubmissionsAPI(**client.api_params) as api:
-        submissions = await api.all_submissions(cid)
+        submissions = await api.all_submissions(
+            cid,
+            language_id=language_id,
+            strict=strict,
+            ids=ids,
+        )
 
         print_submissions_table(submissions)
 
 
 async def download_submission_files(
-    client: DomServerClient,
-    cid: str,
-    id: str,
-    mode: int,
-    path_prefix: Optional[str] = None,
-    strict: Optional[bool] = False,
+        client: DomServerClient,
+        cid: str,
+        id: str,
+        mode: int,
+        path_prefix: Optional[str] = None,
+        strict: Optional[bool] = False,
 ):
+    judgement_mapping = await judgement_submission_mapping(client, cid)
     async with SubmissionsAPI(**client.api_params) as api:
         submission = await api.submission(cid, id)
 
@@ -81,17 +112,21 @@ async def download_submission_files(
 
         submission_file = await api.submission_file_name(cid, id)
         submission_filename = submission_file.filename.split(".")[0]
+        judgement_name = judgement_mapping.get(id)
+        submission_filename = f"{submission_filename}_{judgement_name}"
 
         path = file_path(cid, mode, path_prefix, team, problem)
-        await api.submission_files(cid, id, submission_filename, path)
+        await api.submission_files(cid, id, submission_filename, path, strict)
 
 
 async def download_contest_files(
-    client: DomServerClient,
-    cid: str,
-    mode: int,
-    path_prefix: Optional[str] = None,
+        client: DomServerClient,
+        cid: str,
+        mode: int,
+        path_prefix: Optional[str] = None,
 ):
+    judgement_mapping = await judgement_submission_mapping(client, cid)
+    typer.echo(f"Download contest files, cid: {cid}.")
     async with SubmissionsAPI(**client.api_params) as api:
         submissions = await api.all_submissions(cid)
 
@@ -105,11 +140,20 @@ async def download_contest_files(
 
         async def get_source_codes(submission) -> None:
             id = submission.id
+
+            if (
+                    submission.team_id not in teams_mapping or
+                    submission.problem_id not in problems_mapping
+            ):
+                return
+
             team = teams_mapping[submission.team_id]
             problem = problems_mapping[submission.problem_id]
 
             submission_file = await api.submission_file_name(cid, id)
             submission_filename = submission_file.filename.split(".")[0]
+            judgement_name = judgement_mapping.get(id)
+            submission_filename = f"{submission_filename}_{judgement_name}"
 
             path = file_path(cid, mode, path_prefix, team, problem)
             await api.submission_files(cid, id, submission_filename, path)
