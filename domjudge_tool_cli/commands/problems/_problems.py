@@ -11,6 +11,7 @@ from domjudge_tool_cli.services.v4 import DomServerWeb
 async def download_problems_zips(
     client: DomServerClient,
     exclude: Optional[List[str]] = None,
+    only: Optional[List[str]] = None,
     folder: Optional[str] = None,
 ) -> None:
     if not folder:
@@ -22,12 +23,12 @@ async def download_problems_zips(
 
     async with DomServerWeb(**client.api_params) as web:
         await web.login()
-        problems = await web.get_problems(exclude)
+        problems = await web.get_problems(exclude, only)
 
         with typer.progressbar(problems, label="Download problems:") as progress:
             for problem in progress:
                 export_file_path = problem.export_file_path
-                disk_file_path = f"{folder}/{problem.name}.zip"
+                disk_file_path = f"{folder}/{problem.id}_{problem.name}.zip"
                 disk_file_path = disk_file_path.replace(" ", "-")
                 if not export_file_path:
                     continue

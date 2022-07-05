@@ -35,16 +35,16 @@ def print_submissions_table(submissions: List[Submission]):
 
 def file_path(cid, mode, path, team, problem):
     if mode == 1:
-        file_path = f"Teams/{team.name}/Problems/{problem.short_name}/Submissions"
+        filepath = f"team_{team.name}/problem_{problem.short_name}"
     elif mode == 2:
-        file_path = f"Problems/{problem.short_name}/Teams/{team.name}/Submissions"
+        filepath = f"problem_{problem.short_name}/team_{team.name}"
     else:
-        file_path = f"contests/{cid}/submissions"
+        filepath = f"contest_{cid}"
 
     if path:
-        file_path = f"{path}/{file_path}"
+        filepath = f"{path}/{filepath}"
 
-    return file_path
+    return filepath
 
 
 def index_by_id(objs):
@@ -149,14 +149,10 @@ async def download_contest_files(
 
             team = teams_mapping[submission.team_id]
             problem = problems_mapping[submission.problem_id]
-
-            submission_file = await api.submission_file_name(cid, id)
-            submission_filename = submission_file.filename.split(".")[0]
             judgement_name = judgement_mapping.get(id)
-            submission_filename = f"{submission_filename}_{judgement_name}"
 
             path = file_path(cid, mode, path_prefix, team, problem)
-            await api.submission_files(cid, id, submission_filename, path)
+            await api.submission_files(cid, id, judgement_name, path)
 
         with typer.progressbar(submissions) as progress:
             for task in progress:

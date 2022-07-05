@@ -87,6 +87,7 @@ def check(
     else:
         client = get_or_ask_config(general_state["config"])
 
+    typer.echo(f"Try to connect {client.host}.")
     asyncio.run(get_version(client))
     asyncio.run(check_login_website(client))
 

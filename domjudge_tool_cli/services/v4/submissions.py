@@ -53,7 +53,7 @@ class SubmissionsAPI(V4Client):
 
         path = self.make_resource(f"/contests/{cid}/submissions/{id}/files")
         result = await self.get_file(path)
-        async with aiofiles.open(f"{file_path}/{id}-{filename}.zip", "wb") as f:
+        async with aiofiles.open(f"{file_path}/{filename}_{id}.zip", "wb") as f:
             await f.write(result)
 
     async def submission_file_name(

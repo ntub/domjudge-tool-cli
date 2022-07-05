@@ -261,6 +261,7 @@ class DomServerWeb(WebClient):
     async def get_problems(
         self,
         exclude: Optional[List[str]] = None,
+        only: Optional[List[str]] = None,
     ) -> List[ProblemItem]:
         res = await self.get(ProblemPath.LIST.value)
         res.raise_for_status()
@@ -273,6 +274,9 @@ class DomServerWeb(WebClient):
             time_limit = row.select("td a")[3].text.strip()
             test_data_count = row.select("td a")[6].text.strip()
             export_file_path = str(row.select("td a")[7]["href"]).strip()
+
+            if only and problem_id not in only:
+                continue
 
             if problem_id in exclude:
                 continue
