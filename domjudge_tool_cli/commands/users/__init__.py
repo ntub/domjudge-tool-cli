@@ -71,7 +71,7 @@ def import_users_teams(
     ignore_existing: bool = typer.Option(False),
     delete_existing: bool = typer.Option(False),
     password_length: Optional[int] = typer.Option(None),
-    password_pattern: Optional[str] = typer.Option(None),
+    password_pattern: Optional[str] = typer.Option(None, help="Random charset, ex: 0123456789"),
 ):
     client = get_or_ask_config(general_state["config"])
     asyncio.run(

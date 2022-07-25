@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Optional
 
 import typer
 from tablib import Dataset
@@ -41,6 +41,7 @@ def send_user_accounts(
     with typer.progressbar(dataset.dict) as progress:
         for item in progress:
             item["email"] = None if not item.get("email") else item["email"]
+            item.pop("is_exist")
             user = CreateUser(**item)
             to_email = f"{user.username}@{domain}" if not user.email else user.email
             connection.send_message(from_email, [to_email], context, **item)
