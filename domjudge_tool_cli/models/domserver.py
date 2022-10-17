@@ -16,6 +16,8 @@ class DomServerClient(BaseModel):
     affiliation_id: Optional[int] = None
     affiliation_country: Optional[str] = "TWN"
     user_roles: Optional[List[int]] = None
+    version: str = "7.3.2"
+    api_version: str = "v4"
 
     @property
     def get_timeout(self) -> Optional["httpx.Timeout"]:

@@ -5,7 +5,8 @@ import typer
 from tablib import Dataset
 
 from domjudge_tool_cli.models import CreateUser, DomServerClient, User
-from domjudge_tool_cli.services.v4 import DomServerWeb, UsersAPI
+from domjudge_tool_cli.services.api.v4 import UsersAPI
+from domjudge_tool_cli.services.web import DomServerWebGateway
 from domjudge_tool_cli.utils.password import gen_password
 
 
@@ -101,7 +102,7 @@ async def create_team_and_user(
 
     if not user.password:
         user.password = gen_password(password_length, password_pattern)
-
+    DomServerWeb = DomServerWebGateway(client.version)
     async with DomServerWeb(**client.api_params) as web:
         await web.login()
         if not affiliation_id and not user.affiliation:
@@ -193,12 +194,18 @@ async def create_teams_and_users(
         users.append(user)
 
     if delete_users:
+        delete_teams = [
+            existing_users[username].team_id
+            for username in delete_users
+            if existing_users[username].team_id
+        ]
+        DomServerWeb = DomServerWebGateway(client.version)
         async with DomServerWeb(**client.api_params) as web:
             await web.login()
             typer.echo("Delete existing users.")
             await web.delete_users(delete_users)
             typer.echo("Delete existing teams.")
-            await web.delete_teams(delete_users)
+            await web.delete_teams(delete_teams)
 
     new_users = []
     with typer.progressbar(users) as progress:
@@ -246,9 +253,13 @@ async def delete_teams_and_users(
             )
         )
 
+    include_teams = [it.team_id for it in users if it.username in include]
+    exclude_teams = [it.team_id for it in users if it.username in exclude]
+
+    DomServerWeb = DomServerWebGateway(client.version)
     async with DomServerWeb(**client.api_params) as web:
         await web.login()
         typer.echo("Delete users.")
         await web.delete_users(include, exclude)
         typer.echo("Delete teams.")
-        await web.delete_teams(include, exclude)
+        await web.delete_teams(include_teams, exclude_teams)

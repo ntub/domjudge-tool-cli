@@ -2,9 +2,11 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 import typer
+from pydantic import HttpUrl
 
 from domjudge_tool_cli.models import DomServerClient
-from domjudge_tool_cli.services.v4 import DomServerWeb, GeneralAPI
+from domjudge_tool_cli.services.api.v4 import GeneralAPI
+from domjudge_tool_cli.services.web import DomServerWebGateway
 
 
 async def get_version(client: DomServerClient):
@@ -19,10 +21,11 @@ async def get_version(client: DomServerClient):
 
 
 async def check_login_website(client: DomServerClient):
+    DomServerWeb = DomServerWebGateway(client.version)
     async with DomServerWeb(**client.api_params) as web:
         await web.login()
         message = typer.style(
-            f"Success connect DomJudge website.",
+            f"Success connect DomJudge {client.version} website.",
             fg=typer.colors.GREEN,
             bold=True,
         )
@@ -30,9 +33,11 @@ async def check_login_website(client: DomServerClient):
 
 
 def create_config(
-    host: str,
+    host: HttpUrl,
     username: str,
     password: str,
+    version: str,
+    api_version: str,
     disable_ssl: bool = typer.Option(False),
     timeout: Optional[float] = None,
     max_connections: Optional[int] = None,
@@ -47,6 +52,8 @@ def create_config(
         timeout=timeout,
         max_connections=max_connections,
         max_keepalive_connections=max_keepalive_connections,
+        version=version,
+        api_version=api_version,
     )
     with open("domserver.json", "wb+") as f:
         f.write(dom_server.json().encode())

@@ -4,7 +4,7 @@ import typer
 from tablib import Dataset
 
 from domjudge_tool_cli.models import DomServerClient, Submission
-from domjudge_tool_cli.services.v4 import (
+from domjudge_tool_cli.services.api.v4 import (
     JudgementAPI,
     JudgementTypeAPI,
     ProblemsAPI,
@@ -55,8 +55,8 @@ def index_by_id(objs):
 
 
 async def judgement_submission_mapping(
-        client: DomServerClient,
-        cid: str,
+    client: DomServerClient,
+    cid: str,
 ) -> Dict[str, str]:
     async with JudgementTypeAPI(**client.api_params) as api:
         judgement_types = await api.all_judgement_types(cid)
@@ -65,8 +65,7 @@ async def judgement_submission_mapping(
         judgements = await api.all_judgements(cid)
 
     judgement_type_mapping = {
-        item.id: str(item.name).lower().replace(" ", "_")
-        for item in judgement_types
+        item.id: str(item.name).lower().replace(" ", "_") for item in judgement_types
     }
     return {
         item.submission_id: judgement_type_mapping.get(item.judgement_type_id)
@@ -75,11 +74,11 @@ async def judgement_submission_mapping(
 
 
 async def get_submissions(
-        client: DomServerClient,
-        cid: str,
-        language_id: Optional[str] = None,
-        strict: Optional[bool] = False,
-        ids: Optional[List[str]] = None,
+    client: DomServerClient,
+    cid: str,
+    language_id: Optional[str] = None,
+    strict: Optional[bool] = False,
+    ids: Optional[List[str]] = None,
 ):
     async with SubmissionsAPI(**client.api_params) as api:
         submissions = await api.all_submissions(
@@ -93,12 +92,12 @@ async def get_submissions(
 
 
 async def download_submission_files(
-        client: DomServerClient,
-        cid: str,
-        id: str,
-        mode: int,
-        path_prefix: Optional[str] = None,
-        strict: Optional[bool] = False,
+    client: DomServerClient,
+    cid: str,
+    id: str,
+    mode: int,
+    path_prefix: Optional[str] = None,
+    strict: Optional[bool] = False,
 ):
     judgement_mapping = await judgement_submission_mapping(client, cid)
     async with SubmissionsAPI(**client.api_params) as api:
@@ -120,10 +119,10 @@ async def download_submission_files(
 
 
 async def download_contest_files(
-        client: DomServerClient,
-        cid: str,
-        mode: int,
-        path_prefix: Optional[str] = None,
+    client: DomServerClient,
+    cid: str,
+    mode: int,
+    path_prefix: Optional[str] = None,
 ):
     judgement_mapping = await judgement_submission_mapping(client, cid)
     typer.echo(f"Download contest files, cid: {cid}.")
@@ -142,8 +141,8 @@ async def download_contest_files(
             id = submission.id
 
             if (
-                    submission.team_id not in teams_mapping or
-                    submission.problem_id not in problems_mapping
+                submission.team_id not in teams_mapping
+                or submission.problem_id not in problems_mapping
             ):
                 return
 

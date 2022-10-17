@@ -4,8 +4,7 @@ from typing import List, Optional
 import typer
 
 from domjudge_tool_cli.commands.general import general_state, get_or_ask_config
-from domjudge_tool_cli.commands.problems._problems import \
-    download_problems_zips
+from domjudge_tool_cli.commands.problems._problems import download_problems_zips
 
 app = typer.Typer()
 

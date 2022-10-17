@@ -4,9 +4,11 @@ from typing import List, Optional
 import typer
 
 from domjudge_tool_cli.commands.general import general_state, get_or_ask_config
-
-from ._submissions import (download_contest_files, download_submission_files,
-                           get_submissions)
+from domjudge_tool_cli.commands.submissions._submissions import (
+    download_contest_files,
+    download_submission_files,
+    get_submissions,
+)
 
 app = typer.Typer()
 

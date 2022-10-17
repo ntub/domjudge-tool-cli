@@ -5,9 +5,13 @@ from typing import List, Optional
 import typer
 
 from domjudge_tool_cli.commands.general import general_state, get_or_ask_config
-
-from ._users import (UserExportFormat, create_teams_and_users,
-                     delete_teams_and_users, get_user, get_users)
+from domjudge_tool_cli.commands.users._users import (
+    UserExportFormat,
+    create_teams_and_users,
+    delete_teams_and_users,
+    get_user,
+    get_users,
+)
 
 app = typer.Typer()
 
@@ -71,7 +75,9 @@ def import_users_teams(
     ignore_existing: bool = typer.Option(False),
     delete_existing: bool = typer.Option(False),
     password_length: Optional[int] = typer.Option(None),
-    password_pattern: Optional[str] = typer.Option(None, help="Random charset, ex: 0123456789"),
+    password_pattern: Optional[str] = typer.Option(
+        None, help="Random charset, ex: 0123456789"
+    ),
 ):
     client = get_or_ask_config(general_state["config"])
     asyncio.run(

@@ -5,7 +5,7 @@ import typer
 from aiofiles import os as aio_os
 
 from domjudge_tool_cli.models import DomServerClient
-from domjudge_tool_cli.services.v4 import DomServerWeb
+from domjudge_tool_cli.services.web import DomServerWebGateway
 
 
 async def download_problems_zips(
@@ -21,6 +21,7 @@ async def download_problems_zips(
     if not is_dir:
         await aio_os.makedirs(folder, exist_ok=True)
 
+    DomServerWeb = DomServerWebGateway(client.version)
     async with DomServerWeb(**client.api_params) as web:
         await web.login()
         problems = await web.get_problems(exclude, only)

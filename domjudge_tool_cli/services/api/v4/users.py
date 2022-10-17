@@ -1,8 +1,7 @@
 from typing import List, Optional
 
 from domjudge_tool_cli.models import User
-
-from .base import V4Client
+from domjudge_tool_cli.services.api.v4.base import V4Client
 
 
 class UsersAPI(V4Client):

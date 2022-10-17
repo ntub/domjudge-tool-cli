@@ -6,9 +6,15 @@ from typing import List, Optional
 import typer
 
 from domjudge_tool_cli.models import DomServerClient
+from domjudge_tool_cli.services import SUPPORT_API_VERSIONS, SUPPORT_VERSIONS
 
-from ._check import (check_login_website, create_config, get_version,
-                     read_config, update_config)
+from ._check import (
+    check_login_website,
+    create_config,
+    get_version,
+    read_config,
+    update_config,
+)
 
 app = typer.Typer()
 general_state = {
@@ -35,12 +41,34 @@ def ask_want_to_config():
         default=None,
         show_default=True,
     )
+    version_list_text = "\n".join(
+        [f"({index}\t{ver})" for index, ver in enumerate(SUPPORT_VERSIONS)]
+    )
+    version_index = typer.prompt(
+        f"Setup DOMjudge version?\n{version_list_text}",
+        type=int,
+        default=0,
+        show_default=True,
+    )
+    version = SUPPORT_VERSIONS[version_index]
+    api_version_list_text = "\n".join(
+        [f"({index}\t{ver})" for index, ver in enumerate(SUPPORT_API_VERSIONS)]
+    )
+    api_version_index = typer.prompt(
+        f"Setup DOMjudge API version?\n{api_version_list_text}",
+        type=int,
+        default=0,
+        show_default=True,
+    )
+    api_version = SUPPORT_API_VERSIONS[api_version_index]
     save = typer.confirm("Are you want to save a config file?")
     if save:
         return create_config(
             host=host,
             username=username,
             password=password,
+            version=version,
+            api_version=api_version,
             disable_ssl=disable_ssl,
             timeout=timeout,
         )
@@ -49,6 +77,8 @@ def ask_want_to_config():
         host=host,
         username=username,
         password=password,
+        version=version,
+        api_version=api_version,
         disable_ssl=disable_ssl,
         timeout=timeout,
     )
@@ -123,6 +153,16 @@ def config(
     password: str = typer.Option(
         ..., help="Dom server user password.", prompt=True, hide_input=True
     ),
+    version: str = typer.Option(
+        ...,
+        help="DOMjudge version, ex: 7.3.2",
+        prompt=True,
+    ),
+    api_version: str = typer.Option(
+        ...,
+        help="DOMjudge API version, ex: v4",
+        prompt=True,
+    ),
     disable_ssl: Optional[bool] = typer.Option(None),
     timeout: Optional[float] = typer.Option(None),
     max_connections: Optional[int] = typer.Option(None),
@@ -132,6 +172,8 @@ def config(
         host=host,
         username=username,
         password=password,
+        version=version,
+        api_version=api_version,
         disable_ssl=disable_ssl,
         timeout=timeout,
         max_connections=max_connections,

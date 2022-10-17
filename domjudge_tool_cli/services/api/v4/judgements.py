@@ -1,17 +1,17 @@
 from typing import List, Optional
 
 from domjudge_tool_cli.models import Judgement
-from domjudge_tool_cli.services.v4.base import V4Client
+from domjudge_tool_cli.services.api.v4.base import V4Client
 
 
 class JudgementAPI(V4Client):
     async def all_judgements(
-            self,
-            cid: str,
-            submission_id: Optional[str] = None,
-            result: Optional[str] = None,
-            strict: Optional[bool] = False,
-            ids: Optional[List[str]] = None,
+        self,
+        cid: str,
+        submission_id: Optional[str] = None,
+        result: Optional[str] = None,
+        strict: Optional[bool] = False,
+        ids: Optional[List[str]] = None,
     ) -> List[Judgement]:
         path = self.make_resource(f"/contests/{cid}/judgements")
         params = dict()
