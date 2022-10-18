@@ -115,6 +115,7 @@ async def download_submission_files(
         submission_filename = f"{submission_filename}_{judgement_name}"
 
         path = file_path(cid, mode, path_prefix, team, problem)
+        typer.echo(f"Output path: {path}.")
         await api.submission_files(cid, id, submission_filename, path, strict)
 
 
@@ -153,6 +154,9 @@ async def download_contest_files(
             path = file_path(cid, mode, path_prefix, team, problem)
             await api.submission_files(cid, id, judgement_name, path)
 
+        count = 0
         with typer.progressbar(submissions) as progress:
             for task in progress:
+                count += 1
                 await get_source_codes(task)
+        typer.echo(f"Download {count} submissions.")

@@ -29,6 +29,14 @@ def user_list(
         help="Export file name",
     ),
 ):
+    """
+    Get DOMjudge users info.
+    Args:
+        ids: User ids.
+        team_id: Team id
+        format: Export file format.
+        file: Export file name.
+    """
     user_ids = None
     if ids:
         user_ids = ids.split(",")
@@ -39,12 +47,20 @@ def user_list(
 
 @app.command()
 def user(id: str):
+    """
+    Get DOMjudge user info from user id.
+    Args:
+        id: User id.
+    """
     client = get_or_ask_config(general_state["config"])
     asyncio.run(get_user(client, id))
 
 
 @app.command()
 def import_users_teams_example():
+    """
+    Import users and teams example csv file.
+    """
     import domjudge_tool_cli
 
     file_name = "import-users-teams.csv"

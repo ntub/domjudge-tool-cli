@@ -8,6 +8,7 @@ __all__ = [
 ]
 
 
+# TODO: Generics
 class DomServerWebGateway:
     version_client = {
         "7.3.2": v7.DomServerWeb,
