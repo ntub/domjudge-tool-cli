@@ -12,6 +12,7 @@ __all__ = [
 class DomServerWebGateway:
     version_client = {
         "7.3.2": v7.DomServerWeb,
+        "7.3.4": v7.DomServerWeb,
         "8.1.3": v8.DomServerWeb,
     }
 

@@ -77,7 +77,7 @@ def export(
 
     elements = soup.find("table", class_="scoreboard").find("tbody").find_all("tr")
     for element in elements:
-        if element.find("td", id="scoresummary"):
+        if element.find("td", class_="scoresummary"):
             data.append(summary(element))
         else:
             data.append(scores(element))

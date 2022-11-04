@@ -232,7 +232,11 @@ class DomServerWeb(BaseDomServerWeb):
             affiliation_id = row.select("td a")[0].text.strip()
             shortname = row.select("td a")[1].text.strip()
             name = row.select("td a")[2].text.strip()
-            country = row.select("td a")[3].img.get("alt", "").strip()
+            try:
+                country = row.select("td a")[3].img.get("alt", "").strip()
+            except AttributeError:
+                country = row.select("td a")[3].text.strip()
+
             obj = Affiliation(
                 id=affiliation_id,
                 shortname=shortname,
