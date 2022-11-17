@@ -1,3 +1,7 @@
+import os
+import shutil
+from glob import glob
+from pathlib import Path
 from typing import List, Optional
 
 import aiofiles
@@ -5,6 +9,8 @@ from aiofiles import os as aio_os
 
 from domjudge_tool_cli.models import Submission, SubmissionFile
 from domjudge_tool_cli.services.api.v4.base import V4Client
+
+unpack_archive = aio_os.wrap(shutil.unpack_archive)
 
 
 class SubmissionsAPI(V4Client):
@@ -46,15 +52,31 @@ class SubmissionsAPI(V4Client):
         filename: str,
         file_path: Optional[str] = None,
         strict: Optional[bool] = False,
-    ) -> any:
+        is_extract: bool = False,
+    ) -> str:
         is_dir = await aio_os.path.isdir(file_path)
         if not is_dir:
             await aio_os.makedirs(file_path, exist_ok=True)
 
         path = self.make_resource(f"/contests/{cid}/submissions/{id}/files")
         result = await self.get_file(path)
-        async with aiofiles.open(f"{file_path}/{filename}_{id}.zip", "wb") as f:
+        file_name = f"{filename}_{id}.zip"
+        zip_path = Path(file_path) / file_name
+        async with aiofiles.open(zip_path, "wb") as f:
             await f.write(result)
+
+        if is_extract:
+            async with aiofiles.tempfile.TemporaryDirectory() as temp_dir:
+                await unpack_archive(zip_path, temp_dir, "zip")
+                file = glob(str(temp_dir) + "/*")[0]
+                file_ex = os.path.splitext(file)[-1]
+                await aio_os.rename(
+                    file,
+                    Path(file_path) / f"{filename}_{id}{file_ex}",
+                )
+                await aio_os.remove(zip_path)
+
+        return file_name
 
     async def submission_file_name(
         self,

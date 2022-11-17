@@ -98,6 +98,7 @@ async def download_submission_files(
     mode: int,
     path_prefix: Optional[str] = None,
     strict: Optional[bool] = False,
+    is_extract: bool = True,
 ):
     judgement_mapping = await judgement_submission_mapping(client, cid)
     async with SubmissionsAPI(**client.api_params) as api:
@@ -116,7 +117,14 @@ async def download_submission_files(
 
         path = file_path(cid, mode, path_prefix, team, problem)
         typer.echo(f"Output path: {path}.")
-        await api.submission_files(cid, id, submission_filename, path, strict)
+        await api.submission_files(
+            cid,
+            id,
+            submission_filename,
+            path,
+            strict,
+            is_extract,
+        )
 
 
 async def download_contest_files(
@@ -124,6 +132,8 @@ async def download_contest_files(
     cid: str,
     mode: int,
     path_prefix: Optional[str] = None,
+    strict: Optional[bool] = False,
+    is_extract: bool = True,
 ):
     judgement_mapping = await judgement_submission_mapping(client, cid)
     typer.echo(f"Download contest files, cid: {cid}.")
@@ -152,7 +162,14 @@ async def download_contest_files(
             judgement_name = judgement_mapping.get(id)
 
             path = file_path(cid, mode, path_prefix, team, problem)
-            await api.submission_files(cid, id, judgement_name, path)
+            await api.submission_files(
+                cid,
+                id,
+                judgement_name,
+                path,
+                strict,
+                is_extract,
+            )
 
         count = 0
         with typer.progressbar(submissions) as progress:

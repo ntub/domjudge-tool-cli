@@ -51,6 +51,7 @@ def submission_file(
     ),
     path: Optional[str] = None,
     strict: Optional[bool] = False,
+    is_extract: bool = True,
 ):
     """
     Download a submission source code files.
@@ -60,9 +61,20 @@ def submission_file(
         mode: Output path format mode.
         path: Output path.
         strict:
+        is_extract: unzip file if true.
     """
     client = get_or_ask_config(general_state["config"])
-    asyncio.run(download_submission_files(client, cid, id, mode, path, strict))
+    asyncio.run(
+        download_submission_files(
+            client,
+            cid,
+            id,
+            mode,
+            path,
+            strict,
+            is_extract,
+        )
+    )
 
 
 @app.command()
@@ -71,13 +83,15 @@ def contest_files(
     mode: int = typer.Argument(
         default=2,
         help="""
-            Output path format mode:\n
-            mode=1: team_name/problem_name/submission_file.
-            mode=2: problem_name/team_name/submission_file.
-            other: contest_id/submission_file
-            """,
+        Output path format mode:\n
+        mode=1: team_name/problem_name/submission_file.
+        mode=2: problem_name/team_name/submission_file.
+        other: contest_id/submission_file
+        """,
     ),
     path: Optional[str] = None,
+    strict: Optional[bool] = False,
+    is_extract: bool = True,
 ):
     """
     Download a contest all submissions source code files.
@@ -85,9 +99,17 @@ def contest_files(
         cid: Contest id.
         mode: Output path format mode.
         path: Output path.
-
-    Returns:
-
+        strict:
+        is_extract: unzip file if true.
     """
     client = get_or_ask_config(general_state["config"])
-    asyncio.run(download_contest_files(client, cid, mode, path))
+    asyncio.run(
+        download_contest_files(
+            client,
+            cid,
+            mode,
+            path,
+            strict,
+            is_extract,
+        )
+    )

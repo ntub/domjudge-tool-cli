@@ -13,7 +13,6 @@ from domjudge_tool_cli.commands.users._users import (
     get_users,
 )
 
-
 __all__ = [
     "app",
     "UserExportFormat",
