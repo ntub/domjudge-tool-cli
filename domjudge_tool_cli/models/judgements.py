@@ -19,7 +19,7 @@ class Judgement(BaseModel):
     }
     """
 
-    judgement_type_id: str
+    judgement_type_id: Optional[str]
     judgehost: Optional[str]
     valid: bool
     submission_id: str

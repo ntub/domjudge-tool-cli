@@ -15,7 +15,7 @@ class BaseClient:
         self._parameters = dict(base_url=host)
 
         if disable_ssl:
-            self._parameters["verify_ssl"] = False
+            self._parameters["verify"] = not disable_ssl
 
         if timeout:
             self._parameters["timeout"] = timeout
