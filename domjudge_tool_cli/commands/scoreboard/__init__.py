@@ -19,20 +19,45 @@ def titles(items):
     return headers
 
 
+def get_element_empty(element) -> str:
+    value = ""
+    if element:
+        value = element.text.strip()
+    return value
+
+
 def scores(element):
     data = []
     # Rank
-    data.append(element.find("td", class_="scorepl").text.strip())
-    # TeamAffiliation
     data.append(
-        element.find("td", class_="scoretn").find("span", class_="univ").text.strip()
+            get_element_empty(
+                    element.find("td", class_="scorepl"),
+            ),
     )
+    # TeamAffiliation
+    affiliation_element = element.find("td", class_="scoretn")
+    affiliation = ""
+    if affiliation_element and affiliation_element.find("span", class_="univ"):
+        affiliation = affiliation_element.find("span", class_="univ").text.strip()
+    data.append(affiliation)
     # TeamName
-    data.append(element.find("td", class_="scoretn").find("span").text.split()[-1])
+    team_name_element = element.find("td", class_="scoretn")
+    team_name = ""
+    if team_name_element and team_name_element.find("span"):
+        team_name = element.find("span").text.split()[-1]
+    data.append(team_name)
     # SolvedCount
-    data.append(element.find("td", class_="scorenc").text.strip())
+    data.append(
+            get_element_empty(
+                    element.find("td", class_="scorenc"),
+            ),
+    )
     # Score
-    data.append(element.find("td", class_="scorett").text.strip())
+    data.append(
+            get_element_empty(
+                    element.find("td", class_="scorett"),
+            ),
+    )
     # Problem Score
     for el in element.find_all("td", class_="score_cell"):
         s = el.text.strip().split()

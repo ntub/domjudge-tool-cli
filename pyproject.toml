@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "domjudge-tool-cli"
-version = "0.2.3"
+version = "0.2.4"
 description = "DomJudge dom server cli tool."
 authors = ["Jason Xie <x5758x@gmail.com>"]
 

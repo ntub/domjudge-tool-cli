@@ -158,7 +158,7 @@ async def create_teams_and_users(
     async with UsersAPI(**client.api_params) as api:
         users = await api.all_users()
 
-    existing_users: Dict[str, User] = {it.username.lower(): it for it in users}
+    existing_users: Dict[str, User] = {it.username: it for it in users}
 
     if not format:
         format = UserExportFormat.CSV
@@ -175,7 +175,7 @@ async def create_teams_and_users(
         item["email"] = None if not item.get("email") else item["email"]
         user = CreateUser(**item)
 
-        username = user.username.lower()
+        username = user.username
         if username in existing_users:
             existing_user = existing_users[username]
 
