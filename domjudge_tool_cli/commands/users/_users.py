@@ -93,6 +93,7 @@ async def create_team_and_user(
     enabled: bool = True,
     password_length: Optional[int] = None,
     password_pattern: Optional[str] = None,
+    new_password: bool = False,
 ) -> CreateUser:
     if not category_id:
         category_id = client.category_id
@@ -100,8 +101,9 @@ async def create_team_and_user(
     if not user_roles:
         user_roles = client.user_roles
 
-    if not user.password:
+    if not user.password or new_password:
         user.password = gen_password(password_length, password_pattern)
+
     DomServerWeb = DomServerWebGateway(client.version)
     async with DomServerWeb(**client.api_params) as web:
         await web.login()
@@ -154,6 +156,7 @@ async def create_teams_and_users(
     delete_existing: bool = False,
     password_length: Optional[int] = None,
     password_pattern: Optional[str] = None,
+    new_password: bool = False,
 ) -> None:
     async with UsersAPI(**client.api_params) as api:
         users = await api.all_users()
@@ -219,6 +222,7 @@ async def create_teams_and_users(
                 enabled,
                 password_length,
                 password_pattern,
+                new_password,
             )
             new_users.append(new_user)
 

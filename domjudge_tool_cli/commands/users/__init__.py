@@ -104,6 +104,7 @@ def import_users_teams(
     password_pattern: Optional[str] = typer.Option(
         None, help="Random charset, ex: 0123456789"
     ),
+    new_password: bool = typer.Option(False),
 ):
     client = get_or_ask_config(general_state["config"])
     asyncio.run(
@@ -119,6 +120,7 @@ def import_users_teams(
             delete_existing,
             password_length,
             password_pattern,
+            new_password,
         ),
     )
 

@@ -1,4 +1,5 @@
 import os
+import logging
 import shutil
 from glob import glob
 from pathlib import Path
@@ -68,7 +69,11 @@ class SubmissionsAPI(V4Client):
         if is_extract:
             async with aiofiles.tempfile.TemporaryDirectory() as temp_dir:
                 await unpack_archive(zip_path, temp_dir, "zip")
-                file = glob(str(temp_dir) + "/*")[0]
+                files = list(glob(str(temp_dir) + "/*"))
+                if not files:
+                    logging.warning(f"{zip_path} unzip fail!")
+                    return ""
+                file = files[0]
                 file_ex = os.path.splitext(file)[-1]
                 await aio_os.rename(
                     file,
