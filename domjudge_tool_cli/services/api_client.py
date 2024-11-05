@@ -95,7 +95,7 @@ class WebClient(BaseClient):
         r = await self.client.get(  # type: httpx.Response
             path,
             params=params,
-            allow_redirects=True,
+            follow_redirects=True,
         )
         r.raise_for_status()
         return r
@@ -108,7 +108,7 @@ class WebClient(BaseClient):
         r = await self.client.post(  # type: httpx.Response
             path,
             data=body,
-            allow_redirects=True,
+            follow_redirects=True,
         )
         r.raise_for_status()
         return r

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "domjudge-tool-cli"
-version = "0.2.5"
+version = "0.3.0"
 description = "DomJudge dom server cli tool."
 authors = ["Jason Xie <x5758x@gmail.com>"]
 
@@ -9,21 +9,21 @@ domjudge-tool-cli = "domjudge_tool_cli:app"
 
 
 [tool.poetry.dependencies]
-python = "^3.8"
-typer = "^0.4.0"
-httpx = "^0.19.0"
-pydantic = {extras = ["email", "dotenv"], version = "^1.8.2"}
-tablib = {extras = ["all"], version = "^3.0.0"}
-openpyxl = "^3.0.9"
-beautifulsoup4 = "^4.10.0"
-aiofiles = "^0.8.0"
+python = "^3.11"
+typer = "^0.12.5"
+httpx = "^0.27.2"
+pydantic = {version = "<2", extras = ["dotenv", "email"]}
+tablib = "^3.7.0"
+openpyxl = "^3.1.5"
+beautifulsoup4 = "^4.12.3"
+aiofiles = "^24.1.0"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^5.2"
-ipython = "^7.27.0"
-isort = "^5.10.1"
-black = "^22.10.0"
+pytest = "^8.3.3"
+ipython = "^8.29.0"
+isort = "^5.13.2"
+black = "^24.10.0"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

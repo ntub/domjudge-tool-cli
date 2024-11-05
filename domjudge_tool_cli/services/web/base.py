@@ -23,8 +23,7 @@ def _get_input_fields(page: str) -> dict:
 
 class BaseDomServerWeb(WebClient, ABC):
     @abstractmethod
-    async def login(self) -> None:
-        ...
+    async def login(self) -> None: ...
 
     @abstractmethod
     async def create_team_and_user(
@@ -53,8 +52,7 @@ class BaseDomServerWeb(WebClient, ABC):
         password: str,
         user_roles: List[int],
         enabled: bool = True,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @abstractmethod
     async def delete_users(

@@ -30,9 +30,9 @@ def scores(element):
     data = []
     # Rank
     data.append(
-            get_element_empty(
-                    element.find("td", class_="scorepl"),
-            ),
+        get_element_empty(
+            element.find("td", class_="scorepl"),
+        ),
     )
     # TeamAffiliation
     affiliation_element = element.find("td", class_="scoretn")
@@ -48,15 +48,15 @@ def scores(element):
     data.append(team_name)
     # SolvedCount
     data.append(
-            get_element_empty(
-                    element.find("td", class_="scorenc"),
-            ),
+        get_element_empty(
+            element.find("td", class_="scorenc"),
+        ),
     )
     # Score
     data.append(
-            get_element_empty(
-                    element.find("td", class_="scorett"),
-            ),
+        get_element_empty(
+            element.find("td", class_="scorett"),
+        ),
     )
     # Problem Score
     for el in element.find_all("td", class_="score_cell"):

@@ -3,6 +3,7 @@ from typing import Optional
 import typer
 from tablib import Dataset
 
+from domjudge_tool_cli.commands.general import general_state, get_or_ask_config
 from domjudge_tool_cli.models import CreateUser
 from domjudge_tool_cli.utils.email import helper, smtp
 
@@ -26,6 +27,7 @@ def send_user_accounts(
     if format == "csv":
         input_file = file.read().replace("\ufeff", "")
 
+    client = get_or_ask_config(general_state["config"])
     dataset = Dataset().load(input_file, format=format)
     context = helper.EmailContext(template_dir)
     _, domain = from_email.split("@")
@@ -41,9 +43,15 @@ def send_user_accounts(
     with typer.progressbar(dataset.dict) as progress:
         for item in progress:
             item["email"] = None if not item.get("email") else item["email"]
-            item.pop("is_exist")
+            item.pop("is_exist", None)
             user = CreateUser(**item)
             to_email = f"{user.username}@{domain}" if not user.email else user.email
-            connection.send_message(from_email, [to_email], context, **item)
+            connection.send_message(
+                from_email,
+                [to_email],
+                context,
+                server_host=client.host,
+                **item,
+            )
 
     connection.close()
