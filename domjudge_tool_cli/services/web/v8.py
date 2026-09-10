@@ -1,6 +1,5 @@
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional, Tuple
 
 from bs4 import BeautifulSoup
 
@@ -51,7 +50,6 @@ class DomServerWeb(BaseDomServerWeb):
             "_password": self.password,
         }
         res = await self.post(HomePath.LOGIN, body=data)
-
         assert res.url.path == HomePath.JURY, "Login fail."
 
     async def create_team_and_user(
@@ -60,7 +58,7 @@ class DomServerWeb(BaseDomServerWeb):
         category_id: int,
         affiliation_id: int,
         enabled: bool = True,
-    ) -> Tuple[str, str]:
+    ) -> tuple[str, str]:
         res = await self.get(TeamPath.ADD)
 
         data = {
@@ -86,7 +84,11 @@ class DomServerWeb(BaseDomServerWeb):
 
         soup = BeautifulSoup(res.text, "html.parser")
         user_link = soup.select_one(".container-fluid a")
-        user_id = user_link["href"].split("/")[-1]
+        if user_link is None or not user_link.get("href"):
+            raise ValueError(
+                f"DOMjudge 8 create_team_and_user: failed to find user link on team page {res.url.path}"
+            )
+        user_id = str(user_link["href"]).split("/")[-1]
 
         return team_id, user_id
 
@@ -96,7 +98,9 @@ class DomServerWeb(BaseDomServerWeb):
         category_id: int,
         affiliation_id: int,
         enabled: bool = True,
-    ) -> Tuple[str, str]:
+    ) -> tuple[str, str]:
+        if not user.team_id:
+            raise ValueError("User must have team_id to update team")
         url = TeamPath.EDIT % user.team_id
 
         res = await self.get(url)
@@ -121,7 +125,11 @@ class DomServerWeb(BaseDomServerWeb):
 
         soup = BeautifulSoup(res.text, "html.parser")
         user_link = soup.select_one(".container-fluid a")
-        user_id = user_link["href"].split("/")[-1]
+        if user_link is None or not user_link.get("href"):
+            raise ValueError(
+                f"DOMjudge 8 update_team: failed to find user link on team page {res.url.path}"
+            )
+        user_id = str(user_link["href"]).split("/")[-1]
 
         return team_id, user_id
 
@@ -129,7 +137,7 @@ class DomServerWeb(BaseDomServerWeb):
         self,
         user_id: str,
         password: str,
-        user_roles: List[int],
+        user_roles: list[int],
         enabled: bool = True,
     ) -> None:
         url = UserPath.EDIT % user_id
@@ -152,26 +160,29 @@ class DomServerWeb(BaseDomServerWeb):
 
     async def delete_users(
         self,
-        include: List[str] = None,
-        exclude: List[str] = None,
-    ):
-        include = include if include else []
-        include = set(map(lambda it: it.lower(), include))
-        exclude = exclude if exclude else []
-        exclude = set(map(lambda it: it.lower(), exclude))
+        include: list[str] | None = None,
+        exclude: list[str] | None = None,
+    ) -> None:
+        include_set = {it.lower() for it in (include or [])}
+        exclude_set = {it.lower() for it in (exclude or [])}
         res = await self.get(UserPath.LIST)
         res.raise_for_status()
 
         soup = BeautifulSoup(res.text, "html.parser")
         links = []
         for row in soup.select("table tbody tr"):
-            name = row.select("a")[0].text.strip()
+            a_tags = row.select("a")
+            if not a_tags:
+                continue
+            name = a_tags[0].text.strip()
             lower_name = name.lower()
-            if lower_name not in include or lower_name in exclude:
+            if lower_name not in include_set or lower_name in exclude_set:
                 continue
 
-            link = row.select("a")[-1]["href"]
-            links.append(self.post(link))
+            href = a_tags[-1].get("href")
+            if not isinstance(href, str):
+                continue
+            links.append(self.post(href))
 
         for task in links:
             res = await task
@@ -179,13 +190,11 @@ class DomServerWeb(BaseDomServerWeb):
 
     async def delete_teams(
         self,
-        include: List[str] = None,
-        exclude: List[str] = None,
-    ):
-        include = include if include else []
-        include = set(map(lambda it: it.lower(), include))
-        exclude = exclude if exclude else []
-        exclude = set(map(lambda it: it.lower(), exclude))
+        include: list[str] | None = None,
+        exclude: list[str] | None = None,
+    ) -> None:
+        include_set = {it.lower() for it in (include or [])}
+        exclude_set = {it.lower() for it in (exclude or [])}
         res = await self.get(TeamPath.LIST)
         res.raise_for_status()
 
@@ -193,9 +202,12 @@ class DomServerWeb(BaseDomServerWeb):
         links = []
         now_timestamp = int(datetime.now().timestamp())
         for row in soup.select("table tbody tr"):
-            teamid = row.select("a")[0].text.strip().lower()
+            a_tags = row.select("a")
+            if not a_tags:
+                continue
+            teamid = a_tags[0].text.strip().lower()
 
-            if teamid not in include or teamid in exclude:
+            if teamid not in include_set or teamid in exclude_set:
                 continue
 
             link = TeamPath.DELETE % teamid
@@ -219,7 +231,7 @@ class DomServerWeb(BaseDomServerWeb):
             "team_affiliation[shortname]": shortname,
             "team_affiliation[name]": name,
             "team_affiliation[country]": country,
-            "team_affiliation[internalcomments]": "",
+            "team_affiliation[comments]": "",
         }
 
         res = await self.post(AffiliationPath.ADD, body=data)
@@ -233,17 +245,26 @@ class DomServerWeb(BaseDomServerWeb):
             country=country,
         )
 
-    async def get_affiliations(self) -> List[Affiliation]:
+    async def get_affiliations(self) -> list[Affiliation]:
         res = await self.get(AffiliationPath.LIST)
         res.raise_for_status()
 
         soup = BeautifulSoup(res.text, "html.parser")
         objs = []
         for row in soup.select("table tbody tr"):
-            affiliation_id = row.select("td a")[0].text.strip()
-            shortname = row.select("td a")[2].text.strip()
-            name = row.select("td a")[3].text.strip()
-            country = row.select("td a")[4].img.get("alt", "").strip()
+            links = row.select("td a")
+            if len(links) < 5:
+                raise ValueError(
+                    f"DOMjudge 8 get_affiliations: unexpected table row structure, expected at least 5 link elements, got {len(links)}"
+                )
+            affiliation_id = links[0].text.strip()
+            shortname = links[2].text.strip()
+            name = links[3].text.strip()
+            img = links[4].find("img")
+            if img is not None and isinstance(img.get("alt"), str):
+                country = img["alt"].strip()
+            else:
+                country = links[4].text.strip()
             obj = Affiliation(
                 id=affiliation_id,
                 shortname=shortname,
@@ -254,7 +275,7 @@ class DomServerWeb(BaseDomServerWeb):
 
         return objs
 
-    async def get_affiliation(self, name: str) -> Optional[Affiliation]:
+    async def get_affiliation(self, name: str) -> Affiliation | None:
         affiliations = await self.get_affiliations()
 
         for it in affiliations:
@@ -265,32 +286,42 @@ class DomServerWeb(BaseDomServerWeb):
 
     async def get_problems(
         self,
-        exclude: Optional[List[str]] = None,
-        only: Optional[List[str]] = None,
-    ) -> List[ProblemItem]:
+        exclude: list[str] | None = None,
+        only: list[str] | None = None,
+    ) -> list[ProblemItem]:
         res = await self.get(ProblemPath.LIST)
         res.raise_for_status()
 
         soup = BeautifulSoup(res.text, "html.parser")
         objs = []
         for row in soup.select("table tbody tr"):
-            problem_id = row.select("td a")[0].text.strip()
-            name = row.select("td a")[1].text.strip()
-            time_limit = row.select("td a")[3].text.strip()
-            test_data_count = row.select("td a")[6].text.strip()
-            export_file_path = str(row.select("td a")[7]["href"]).strip()
+            links = row.select("td a")
+            if len(links) < 8:
+                raise ValueError(
+                    f"DOMjudge 8 get_problems: unexpected table row structure, expected at least 8 link elements, got {len(links)}"
+                )
+            problem_id = links[0].text.strip()
+            name = links[1].text.strip()
+            time_limit = links[3].text.strip()
+            test_data_count = links[6].text.strip()
+            href = links[7].get("href")
+            if not isinstance(href, str):
+                raise ValueError(
+                    "DOMjudge 8 get_problems: missing href attribute on export link"
+                )
+            export_file_path = href.strip()
 
             if only and problem_id not in only:
                 continue
 
-            if problem_id in exclude:
+            if exclude and problem_id in exclude:
                 continue
 
             obj = ProblemItem(
                 id=problem_id,
                 name=name,
-                time_limit=time_limit,
-                test_data_count=test_data_count,
+                time_limit=int(time_limit),
+                test_data_count=int(test_data_count),
                 export_file_path=export_file_path,
             )
             objs.append(obj)

@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Tuple
 
 from bs4 import BeautifulSoup
 
@@ -7,17 +6,26 @@ from domjudge_tool_cli.models import Affiliation, CreateUser, ProblemItem, User
 from domjudge_tool_cli.services.api_client import WebClient
 
 
-def _get_input_fields(page: str) -> dict:
+def _get_input_fields(page: str) -> dict[str, str | None]:
     soup = BeautifulSoup(page, "html.parser")
+    data: dict[str, str | None] = {}
 
-    data = {ele.get("name"): ele.get("value") for ele in soup.select("input")}
+    for ele in soup.select("input"):
+        name = ele.get("name")
+        val = ele.get("value")
+        if isinstance(name, str):
+            data[name] = val if isinstance(val, str) else None
 
-    select_tags = soup.select("select")
-    for tag in select_tags:
-        option = tag.select_one("option[selected]")
-        data[tag.get("name")] = option.get("value") if option else None
+    for tag in soup.select("select"):
+        name = tag.get("name")
+        if isinstance(name, str):
+            option = tag.select_one("option[selected]")
+            if option is not None:
+                val = option.get("value")
+                data[name] = val if isinstance(val, str) else None
+            else:
+                data[name] = None
 
-    data.pop(None, None)  # remove no name fields
     return data
 
 
@@ -32,8 +40,7 @@ class BaseDomServerWeb(WebClient, ABC):
         category_id: int,
         affiliation_id: int,
         enabled: bool = True,
-    ) -> Tuple[str, str]:
-        raise NotImplemented
+    ) -> tuple[str, str]: ...
 
     @abstractmethod
     async def update_team(
@@ -42,45 +49,30 @@ class BaseDomServerWeb(WebClient, ABC):
         category_id: int,
         affiliation_id: int,
         enabled: bool = True,
-    ) -> Tuple[str, str]:
-        raise NotImplemented
+    ) -> tuple[str, str]: ...
 
     @abstractmethod
     async def set_user_password(
         self,
         user_id: str,
         password: str,
-        user_roles: List[int],
+        user_roles: list[int],
         enabled: bool = True,
     ) -> None: ...
 
     @abstractmethod
     async def delete_users(
         self,
-        include: List[str] = None,
-        exclude: List[str] = None,
-    ) -> None:
-        """
-
-        Args:
-            include: list of username.
-            exclude: list of username.
-        """
-        ...
+        include: list[str] | None = None,
+        exclude: list[str] | None = None,
+    ) -> None: ...
 
     @abstractmethod
     async def delete_teams(
         self,
-        include: List[str] = None,
-        exclude: List[str] = None,
-    ) -> None:
-        """
-
-        Args:
-            include: list of team id.
-            exclude: list of team id.
-        """
-        ...
+        include: list[str] | None = None,
+        exclude: list[str] | None = None,
+    ) -> None: ...
 
     @abstractmethod
     async def create_affiliation(
@@ -88,21 +80,17 @@ class BaseDomServerWeb(WebClient, ABC):
         shortname: str,
         name: str,
         country: str = "TWN",
-    ) -> Affiliation:
-        raise NotImplemented
+    ) -> Affiliation: ...
 
     @abstractmethod
-    async def get_affiliations(self) -> List[Affiliation]:
-        raise NotImplemented
+    async def get_affiliations(self) -> list[Affiliation]: ...
 
     @abstractmethod
-    async def get_affiliation(self, name: str) -> Optional[Affiliation]:
-        raise NotImplemented
+    async def get_affiliation(self, name: str) -> Affiliation | None: ...
 
     @abstractmethod
     async def get_problems(
         self,
-        exclude: Optional[List[str]] = None,
-        only: Optional[List[str]] = None,
-    ) -> List[ProblemItem]:
-        raise NotImplemented
+        exclude: list[str] | None = None,
+        only: list[str] | None = None,
+    ) -> list[ProblemItem]: ...
