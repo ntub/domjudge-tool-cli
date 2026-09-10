@@ -1,45 +1,44 @@
 # Domjudge Tool CLI
 
-- Python 3.8.7
-- [poetry](https://python-poetry.org/docs/cli/)
+- Python >= 3.13
+- [mise](https://mise.jdx.dev/)
+- [uv](https://docs.astral.sh/uv/)
 
+## Development
 
-## Install
+Prerequisites: install [mise](https://mise.jdx.dev/).
 
 ```shell
-$ pip install --user poetry
+# Install tools (Python 3.13.15, uv 0.12.12)
+$ mise install
 
-$ git clone 
-$ cd 
+# Install dependencies into virtual environment
+$ mise run install
 
-$ poetry install
-$ poetry shell
-# Activating the virtual environment
+# Run linters, type checks, and tests
+$ mise run check
 
-$ poetry add <package>
-# Add dependencies
+# Format codebase
+$ mise run format
 
-$  poetry add --dev <package>
-# Add package as development dependency
+# Build wheel and sdist
+$ mise run build
 ```
 
-
-## Use
+## CLI Usage
 
 ```shell
 $ domjudge-tool-cli general config https://domjudge.example.dev
 
-$ domjudge-tool-cli general check                                            
+$ domjudge-tool-cli general check
 Success connect API v4.
 
 $ domjudge-tool-cli users user-list
 ```
 
-## Python packages
+## Tech Stack
 
 - [typer](https://typer.tiangolo.com/): CLI framework
-- [httpx](https://www.python-httpx.org): asyncio http client
-- [pydantic](https://pydantic-docs.helpmanual.io/): Data validation
+- [httpx](https://www.python-httpx.org): asyncio HTTP client
+- [pydantic](https://docs.pydantic.dev/): Data validation
 - [tablib](https://tablib.readthedocs.io): Import and export data
-
-

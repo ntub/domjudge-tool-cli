@@ -204,3 +204,6 @@ Temporary Items
 domserver.json.bak
 domserver.json
 domserver.json.*
+.ruff_cache/
+mise.local.toml
+mise.local.lock

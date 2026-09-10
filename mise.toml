@@ -1,0 +1,37 @@
+min_version = "2026.9.4"
+
+[tools]
+python = "3.13.15"
+uv = "0.12.12"
+
+[env]
+UV_PYTHON = { value = "{{ tools.python.path }}", tools = true }
+
+[settings]
+lockfile = true
+"python.uv_venv_auto" = "source"
+minimum_release_age = "0"
+
+[tasks.install]
+run = "uv sync --locked"
+
+[tasks.format]
+run = "uv run ruff check --fix . && uv run ruff format ."
+
+[tasks."format-check"]
+run = "uv run ruff format --check ."
+
+[tasks.lint]
+run = "uv run ruff check ."
+
+[tasks.typecheck]
+run = "uv run ty check"
+
+[tasks.test]
+run = "uv run pytest"
+
+[tasks.build]
+run = "uv build"
+
+[tasks.check]
+depends = ["format-check", "lint", "typecheck", "test"]

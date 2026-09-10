@@ -1,29 +1,63 @@
-[tool.poetry]
+[project]
 name = "domjudge-tool-cli"
-version = "0.3.0"
-description = "DomJudge dom server cli tool."
-authors = ["Jason Xie <x5758x@gmail.com>"]
+version = "0.4.0"
+description = "A simple domjudge tool on cli."
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+authors = [
+    {name = "ntub-inc"},
+]
+dependencies = [
+    "aiofiles>=25.1.0,<26",
+    "beautifulsoup4>=4.15.0,<5",
+    "httpx>=0.28.1,<0.29",
+    "pydantic[email]>=2.13.5,<3",
+    "tablib>=3.10.0,<4",
+    "typer>=0.27.2,<0.28",
+]
 
-[tool.poetry.scripts]
+[project.urls]
+repository = "https://github.com/ntub/domjudge-tool-cli"
+
+[project.scripts]
 domjudge-tool-cli = "domjudge_tool_cli:app"
 
-
-[tool.poetry.dependencies]
-python = "^3.11"
-typer = "^0.12.5"
-httpx = "^0.27.2"
-pydantic = {version = "<2", extras = ["dotenv", "email"]}
-tablib = "^3.7.0"
-openpyxl = "^3.1.5"
-beautifulsoup4 = "^4.12.3"
-aiofiles = "^24.1.0"
-
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.3"
-ipython = "^8.29.0"
-isort = "^5.13.2"
-black = "^24.10.0"
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1,<10",
+    "ruff==0.16.6",
+    "ty==0.0.80",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["uv_build>=0.12.12,<0.13"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "domjudge_tool_cli"
+module-root = ""
+source-include = ["tests/**"]
+
+[tool.ruff]
+line-length = 88
+indent-width = 4
+target-version = "py313"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["domjudge_tool_cli"]
+
+[tool.ty.src]
+include = ["domjudge_tool_cli", "tests"]
+
+[tool.ty.environment]
+root = ["."]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
