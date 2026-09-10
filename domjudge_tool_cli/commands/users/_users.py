@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import typer
 from tablib import Dataset
@@ -10,13 +10,14 @@ from domjudge_tool_cli.services.web import DomServerWebGateway
 from domjudge_tool_cli.utils.password import gen_password
 
 
-def gen_user_dataset(users: List[Any]) -> Dataset:
+def gen_user_dataset(users: list[Any]) -> Dataset:
     dataset = Dataset()
     for idx, user in enumerate(users):
+        user_dict = user.model_dump()
         if idx == 0:
-            dataset.headers = user.dict().keys()
+            dataset.headers = list(user_dict.keys())
 
-        dataset.append(user.dict().values())
+        dataset.append(list(user_dict.values()))
 
     return dataset
 
@@ -27,47 +28,51 @@ class UserExportFormat(str, Enum):
 
     def export(
         self,
-        users: List[Any],
-        file: Optional[typer.FileBinaryWrite] = None,
-        name: Optional[str] = None,
+        users: list[Any],
+        file: typer.FileTextWrite | None = None,
+        name: str | None = None,
     ) -> str:
         dataset = gen_user_dataset(users)
+        exported = dataset.export(self.value)
+        text_content = exported if isinstance(exported, str) else str(exported)
         if file:
-            file.write(dataset.export(self.value))
-            return file.name
+            file.write(text_content)
+            return getattr(file, "name", "output")
         else:
             if not name:
-                name = f"export_users.{self.value}"
+                filename = f"export_users.{self.value}"
             else:
-                name = f"{name}.{self.value}"
+                filename = f"{name}.{self.value}"
 
-            with open(name, "w") as f:
-                f.write(dataset.export(self.value))
-                return name
+            with open(filename, "w", encoding="utf-8") as f:
+                f.write(text_content)
+                return filename
 
 
-def print_users_table(users: List[User]):
+def print_users_table(users: list[User]) -> None:
     dataset = gen_user_dataset(users)
-    for rm_key in ["last_login_time", "first_login_time", "roles", "last_ip", "ip"]:
-        del dataset[rm_key]
+    for user_row in dataset:
+        roles_index = dataset.headers.index("roles")
+        dataset[roles_index] = ",".join(user_row[roles_index])
+
     typer.echo(dataset.export("cli", tablefmt="simple"))
 
 
 async def get_users(
     client: DomServerClient,
-    ids: Optional[List[str]] = None,
-    team_id: Optional[str] = None,
-    format: Optional[UserExportFormat] = None,
-    file: Optional[typer.FileBinaryWrite] = None,
-):
+    ids: list[str] | None = None,
+    team_id: str | None = None,
+    format: UserExportFormat | None = None,
+    file: typer.FileTextWrite | None = None,
+) -> None:
     async with UsersAPI(**client.api_params) as api:
         users = await api.all_users(ids, team_id)
 
     if ids:
-        users = list(filter(lambda obj: obj.id in ids, users))
+        users = [obj for obj in users if obj.id in ids]
 
     if team_id:
-        users = list(filter(lambda obj: obj.team_id == team_id, users))
+        users = [obj for obj in users if obj.team_id == team_id]
 
     if format:
         format.export(users, file)
@@ -78,7 +83,7 @@ async def get_users(
 async def get_user(
     client: DomServerClient,
     id: str,
-):
+) -> None:
     async with UsersAPI(**client.api_params) as api:
         user = await api.get_user(id)
     print_users_table([user])
@@ -86,51 +91,36 @@ async def get_user(
 
 async def create_team_and_user(
     client: DomServerClient,
-    user: Union[CreateUser, User],
-    category_id: Optional[int] = None,
-    affiliation_id: Optional[int] = None,
-    user_roles: Optional[List[int]] = None,
+    user: CreateUser,
+    category_id: int,
+    affiliation_id: int,
+    user_roles: list[int],
     enabled: bool = True,
-    password_length: Optional[int] = None,
-    password_pattern: Optional[str] = None,
+    password_length: int = 10,
+    password_pattern: str | None = None,
     new_password: bool = False,
 ) -> CreateUser:
     if not category_id:
-        category_id = client.category_id
+        raise ValueError("Missing category_id")
+
+    if not affiliation_id:
+        raise ValueError("Missing affiliation_id")
 
     if not user_roles:
-        user_roles = client.user_roles
-
-    if not user.password or new_password:
-        user.password = gen_password(password_length, password_pattern)
+        raise ValueError("Missing user_roles")
 
     DomServerWeb = DomServerWebGateway(client.version)
     async with DomServerWeb(**client.api_params) as web:
         await web.login()
-        if not affiliation_id and not user.affiliation:
-            affiliation_id = client.affiliation_id
-        elif user.affiliation:
-            affiliation = await web.get_affiliation(user.affiliation)
 
-            if affiliation:
-                affiliation_id = affiliation.id
-            else:
-                name = user.affiliation
-                affiliation = await web.create_affiliation(
-                    name,
-                    name,
-                    client.affiliation_country,
-                )
-                affiliation_id = affiliation.id
-
-        if isinstance(user, User):
+        if user.is_exist:
+            user_model = User(**user.model_dump())
             team_id, user_id = await web.update_team(
-                user,
+                user_model,
                 category_id,
                 affiliation_id,
                 enabled,
             )
-            user = CreateUser.from_user(user)
         else:
             team_id, user_id = await web.create_team_and_user(
                 user,
@@ -139,7 +129,15 @@ async def create_team_and_user(
                 enabled,
             )
 
-        await web.set_user_password(user_id, user.password, user_roles, enabled)
+        if not user.password or new_password:
+            password = gen_password(password_length, password_pattern)
+            await web.set_user_password(
+                user_id,
+                password,
+                user_roles,
+                enabled,
+            )
+            user.password = password
 
         return user
 
@@ -147,31 +145,31 @@ async def create_team_and_user(
 async def create_teams_and_users(
     client: DomServerClient,
     file: typer.FileText,
-    category_id: Optional[int] = None,
-    affiliation_id: Optional[int] = None,
-    user_roles: Optional[List[int]] = None,
+    category_id: int,
+    affiliation_id: int,
+    user_roles: list[int],
     enabled: bool = True,
-    format: Optional[UserExportFormat] = None,
-    ignore_existing: bool = False,
+    format: UserExportFormat | None = None,
     delete_existing: bool = False,
-    password_length: Optional[int] = None,
-    password_pattern: Optional[str] = None,
+    ignore_existing: bool = False,
+    password_length: int = 10,
+    password_pattern: str | None = None,
     new_password: bool = False,
 ) -> None:
     async with UsersAPI(**client.api_params) as api:
-        users = await api.all_users()
+        existing_list = await api.all_users()
 
-    existing_users: Dict[str, User] = {it.username: it for it in users}
+    existing_users: dict[str, User] = {it.username: it for it in existing_list}
 
     if not format:
         format = UserExportFormat.CSV
 
-    input_file = file
+    input_file: Any = file
     if format == UserExportFormat.CSV:
         input_file = file.read().replace("\ufeff", "")
 
-    users = []
-    delete_users = []
+    users: list[Any] = []
+    delete_users: list[str] = []
     dataset = Dataset().load(input_file, format=format.value)
 
     for item in dataset.dict:
@@ -208,14 +206,14 @@ async def create_teams_and_users(
             typer.echo("Delete existing users.")
             await web.delete_users(delete_users)
             typer.echo("Delete existing teams.")
-            await web.delete_teams(delete_teams)
+            await web.delete_teams([t for t in delete_teams if t])
 
-    new_users = []
+    new_users: list[CreateUser] = []
     with typer.progressbar(users) as progress:
-        for user in progress:
+        for user_obj in progress:
             new_user = await create_team_and_user(
                 client,
-                user,
+                user_obj,
                 category_id,
                 affiliation_id,
                 user_roles,
@@ -233,37 +231,16 @@ async def create_teams_and_users(
 
 async def delete_teams_and_users(
     client: DomServerClient,
-    include: Optional[List[str]] = None,
-    exclude: Optional[List[str]] = None,
+    delete_users: list[str],
+    delete_teams: list[str],
 ) -> None:
     default_ignore_users = ["admin", "judgehost", client.username]
-
-    async with UsersAPI(**client.api_params) as api:
-        users = await api.all_users()
-
-    existing_users = [it.username for it in users]
-
-    if not exclude:
-        exclude = default_ignore_users
-
-    if not include:
-        include = existing_users
-
-    if include:
-        include = list(
-            filter(
-                lambda it: it not in default_ignore_users,
-                include,
-            )
-        )
-
-    include_teams = [it.team_id for it in users if it.username in include]
-    exclude_teams = [it.team_id for it in users if it.username in exclude]
+    delete_users_set = {it for it in delete_users if it not in default_ignore_users}
 
     DomServerWeb = DomServerWebGateway(client.version)
     async with DomServerWeb(**client.api_params) as web:
         await web.login()
-        typer.echo("Delete users.")
-        await web.delete_users(include, exclude)
-        typer.echo("Delete teams.")
-        await web.delete_teams(include_teams, exclude_teams)
+        typer.echo(f"Delete existing users: {','.join(delete_users_set)}")
+        await web.delete_users(list(delete_users_set))
+        typer.echo(f"Delete existing teams: {','.join(delete_teams)}")
+        await web.delete_teams(delete_teams)

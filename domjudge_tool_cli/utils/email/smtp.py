@@ -1,5 +1,5 @@
 import smtplib
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any
 
 from domjudge_tool_cli.utils.email.helper import EmailContext
 
@@ -8,19 +8,19 @@ class SMTP:
     host: str = "localhost"
     port: int = 25
     use_ssl: bool = False
-    timeout: Optional[int] = None
-    username: Optional[str] = None
-    password: Optional[str] = None
-    connection: Optional[Union[smtplib.SMTP_SSL, smtplib.SMTP]]
+    timeout: int | None = None
+    username: str | None = None
+    password: str | None = None
+    connection: smtplib.SMTP_SSL | smtplib.SMTP | None
 
     def __init__(
         self,
         host: str = "localhost",
         port: int = 25,
         use_ssl: bool = False,
-        timeout: Optional[int] = None,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
+        timeout: int | None = None,
+        username: str | None = None,
+        password: str | None = None,
     ):
         self.host = host
         self.port = port
@@ -31,11 +31,11 @@ class SMTP:
         self.connection = None
 
     @property
-    def connection_class(self) -> Union[Type[smtplib.SMTP_SSL], Type[smtplib.SMTP]]:
+    def connection_class(self) -> type[smtplib.SMTP_SSL] | type[smtplib.SMTP]:
         return smtplib.SMTP_SSL if self.use_ssl else smtplib.SMTP
 
-    def open(self):
-        connection_params = dict()
+    def open(self) -> None:
+        connection_params: dict[str, Any] = {}
         if self.timeout is not None:
             connection_params["timeout"] = self.timeout
 
@@ -48,7 +48,7 @@ class SMTP:
         if self.username and self.password:
             self.connection.login(self.username, self.password)
 
-    def close(self):
+    def close(self) -> None:
         if self.connection is None:
             return
         try:
@@ -63,10 +63,12 @@ class SMTP:
     def send_message(
         self,
         from_email: str,
-        to_address: List[str],
+        to_address: list[str],
         message: EmailContext,
-        **kwargs: Dict[str, Any],
-    ) -> Dict[str, Tuple[int, bytes]]:
+        **kwargs: Any,
+    ) -> dict[str, tuple[int, bytes]]:
+        if self.connection is None:
+            raise RuntimeError("SMTP connection not open")
         msg = message.mime(from_email, to_address, **kwargs)
         return self.connection.sendmail(
             from_email,

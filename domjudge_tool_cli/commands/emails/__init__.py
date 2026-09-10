@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Annotated
 
 import typer
 from tablib import Dataset
@@ -12,17 +12,19 @@ app = typer.Typer()
 
 @app.command()
 def send_user_accounts(
-    file: typer.FileText = typer.Argument(...),
-    template_dir: str = typer.Argument(...),
-    host: Optional[str] = typer.Option("localhost"),
-    port: Optional[int] = typer.Option(25),
-    from_email: Optional[str] = typer.Option("noreply@localhost"),
-    use_ssl: Optional[bool] = typer.Option(False),
-    format: Optional[str] = typer.Option("csv"),
-    timeout: Optional[int] = None,
-    username: Optional[str] = None,
-    password: Optional[str] = None,
-):
+    file: Annotated[typer.FileText, typer.Argument(help="Accounts input file.")],
+    template_dir: Annotated[str, typer.Argument(help="Email templates directory.")],
+    host: Annotated[str, typer.Option(help="SMTP host.")] = "localhost",
+    port: Annotated[int, typer.Option(help="SMTP port.")] = 25,
+    from_email: Annotated[
+        str, typer.Option(help="Sender email.")
+    ] = "noreply@localhost",
+    use_ssl: Annotated[bool, typer.Option(help="Use SSL?")] = False,
+    format: Annotated[str, typer.Option(help="File format (csv/json).")] = "csv",
+    timeout: Annotated[int | None, typer.Option(help="SMTP timeout.")] = None,
+    username: Annotated[str | None, typer.Option(help="SMTP username.")] = None,
+    password: Annotated[str | None, typer.Option(help="SMTP password.")] = None,
+) -> None:
     input_file = file
     if format == "csv":
         input_file = file.read().replace("\ufeff", "")

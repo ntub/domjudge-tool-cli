@@ -1,6 +1,7 @@
 import asyncio
+import importlib.resources
 import os
-from typing import List, Optional
+from typing import Annotated
 
 import typer
 
@@ -14,12 +15,11 @@ from domjudge_tool_cli.commands.users._users import (
 )
 
 __all__ = [
-    "app",
-    "UserExportFormat",
-    "create_teams_and_users",
-    "delete_teams_and_users",
-    "get_user",
-    "get_users",
+    "user_list",
+    "user",
+    "import_users_teams_example",
+    "import_users_teams",
+    "rm_teams_and_users",
 ]
 
 
@@ -28,85 +28,101 @@ app = typer.Typer()
 
 @app.command()
 def user_list(
-    ids: Optional[str] = typer.Option(
-        None,
-        help="user_id1,user_id2,user_id3",
-    ),
-    team_id: Optional[str] = None,
-    format: Optional[UserExportFormat] = None,
-    file: Optional[typer.FileBinaryWrite] = typer.Option(
-        None,
-        help="Export file name",
-    ),
-):
+    ids: Annotated[
+        str | None,
+        typer.Option(help="user_id1,user_id2,user_id3"),
+    ] = None,
+    team_id: Annotated[str | None, typer.Option(help="Team id")] = None,
+    format: Annotated[
+        UserExportFormat | None,
+        typer.Option(help="Export file format."),
+    ] = None,
+    file: Annotated[
+        typer.FileTextWrite | None,
+        typer.Option(help="Export file name"),
+    ] = None,
+) -> None:
     """
     Get DOMjudge users info.
-    Args:
-        ids: User ids.
-        team_id: Team id
-        format: Export file format.
-        file: Export file name.
     """
-    user_ids = None
-    if ids:
-        user_ids = ids.split(",")
+    user_ids = ids.split(",") if ids else None
 
     client = get_or_ask_config(general_state["config"])
     asyncio.run(get_users(client, user_ids, team_id, format, file))
 
 
 @app.command()
-def user(id: str):
+def user(id: Annotated[str, typer.Argument(help="User id.")]) -> None:
     """
-    Get DOMjudge user info from user id.
-    Args:
-        id: User id.
+    Get DOMjudge user info by ID.
     """
     client = get_or_ask_config(general_state["config"])
     asyncio.run(get_user(client, id))
 
 
 @app.command()
-def import_users_teams_example():
+def import_users_teams_example() -> None:
     """
     Import users and teams example csv file.
     """
-    import domjudge_tool_cli
-
     file_name = "import-users-teams.csv"
-    file_path = os.path.join(
-        domjudge_tool_cli.__path__[0],
-        "templates",
-        "csv",
-        file_name,
+    template_resource = importlib.resources.files("domjudge_tool_cli").joinpath(
+        "templates", "csv", file_name
     )
+    content = template_resource.read_text(encoding="utf-8")
     new_file_path = os.path.join(os.getcwd(), file_name)
-    with open(file_path, encoding="utf-8") as template_file:
-        content = template_file.read()
-
-    with open(new_file_path, "w", encoding="utf-8") as file:
-        file.write(content)
+    with open(new_file_path, "w", encoding="utf-8") as f:
+        f.write(content)
 
     typer.echo(new_file_path)
 
 
 @app.command()
 def import_users_teams(
-    file: typer.FileText = typer.Argument(...),
-    category_id: Optional[int] = typer.Option(None),
-    affiliation_id: Optional[int] = typer.Option(None),
-    user_roles: Optional[List[int]] = typer.Option(None),
-    enabled: bool = typer.Option(True),
-    format: Optional[UserExportFormat] = None,
-    ignore_existing: bool = typer.Option(False),
-    delete_existing: bool = typer.Option(False),
-    password_length: Optional[int] = typer.Option(None),
-    password_pattern: Optional[str] = typer.Option(
-        None, help="Random charset, ex: 0123456789"
-    ),
-    new_password: bool = typer.Option(False),
-):
+    file: Annotated[typer.FileText, typer.Argument(help="Users CSV file.")],
+    category_id: Annotated[int | None, typer.Option(help="Category ID")] = None,
+    affiliation_id: Annotated[int | None, typer.Option(help="Affiliation ID")] = None,
+    user_roles: Annotated[
+        list[int] | None,
+        typer.Option(help="Roles ID, default is 3 (Team Member)"),
+    ] = None,
+    enabled: Annotated[bool, typer.Option(help="User and team is enabled?")] = True,
+    format: Annotated[
+        UserExportFormat | None,
+        typer.Option(help="File format, default is CSV"),
+    ] = None,
+    delete_existing: Annotated[
+        bool,
+        typer.Option(help="Delete existing users and teams"),
+    ] = False,
+    ignore_existing: Annotated[
+        bool,
+        typer.Option(help="Ignore existing users and teams"),
+    ] = False,
+    password_length: Annotated[int, typer.Option(help="Generate password length")] = 10,
+    password_pattern: Annotated[
+        str | None,
+        typer.Option(help="Generate password pattern"),
+    ] = None,
+    new_password: Annotated[
+        bool,
+        typer.Option(help="Set new password for existing user"),
+    ] = False,
+) -> None:
     client = get_or_ask_config(general_state["config"])
+    category_id = category_id or client.category_id
+    affiliation_id = affiliation_id or client.affiliation_id
+    user_roles = user_roles or client.user_roles
+
+    if category_id is None:
+        raise ValueError("Missing category_id")
+
+    if affiliation_id is None:
+        raise ValueError("Missing affiliation_id")
+
+    if user_roles is None:
+        raise ValueError("Missing user_roles")
+
     asyncio.run(
         create_teams_and_users(
             client,
@@ -116,25 +132,31 @@ def import_users_teams(
             user_roles,
             enabled,
             format,
-            ignore_existing,
             delete_existing,
+            ignore_existing,
             password_length,
             password_pattern,
             new_password,
-        ),
+        )
     )
 
 
 @app.command()
 def rm_teams_and_users(
-    include: Optional[List[str]] = typer.Option(None),
-    exclude: Optional[List[str]] = typer.Option(None),
-):
+    delete_users: Annotated[
+        list[str],
+        typer.Option("--user", help="Delete user usernames"),
+    ],
+    delete_teams: Annotated[
+        list[str],
+        typer.Option("--team", help="Delete team ids"),
+    ],
+) -> None:
     client = get_or_ask_config(general_state["config"])
     asyncio.run(
         delete_teams_and_users(
             client,
-            include,
-            exclude,
-        ),
+            delete_users,
+            delete_teams,
+        )
     )

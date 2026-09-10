@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Optional
+from typing import Annotated
 
 import typer
 
@@ -15,22 +15,21 @@ app = typer.Typer()
 
 @app.command()
 def submission_list(
-    cid: str,
-    language_id: Optional[str] = None,
-    strict: Optional[bool] = False,
-    ids: Optional[List[str]] = None,
-):
+    cid: Annotated[str, typer.Argument(help="Contest id.")],
+    language_id: Annotated[
+        str | None,
+        typer.Option(help="Language id."),
+    ] = None,
+    strict: Annotated[bool, typer.Option(help="Strict mode.")] = False,
+    ids: Annotated[
+        str | None,
+        typer.Option(help="submission_id1,submission_id2,submission_id3"),
+    ] = None,
+) -> None:
     """
-    Console log submissions.
-    Args:
-        cid: *Contest id.
-        language_id:
-        strict:
-        ids: Submission ids.
+    Get contest submission list.
     """
-    submission_ids = None
-    if ids:
-        submission_ids = ids.split(",")
+    submission_ids = ids.split(",") if ids else None
 
     client = get_or_ask_config(general_state["config"])
     asyncio.run(get_submissions(client, cid, language_id, strict, submission_ids))
@@ -38,30 +37,30 @@ def submission_list(
 
 @app.command()
 def submission_file(
-    cid: str,
-    id: str,
-    mode: int = typer.Argument(
-        default=2,
-        help="""
-            Output path format mode:\n
-            mode=1: team_name/problem_name/submission_file.
-            mode=2: problem_name/team_name/submission_file.
-            other: contest_id/submission_file
-            """,
-    ),
-    path: Optional[str] = None,
-    strict: Optional[bool] = False,
-    is_extract: bool = True,
-):
+    cid: Annotated[str, typer.Argument(help="Contest id.")],
+    id: Annotated[str, typer.Argument(help="Submission id.")],
+    mode: Annotated[
+        int,
+        typer.Argument(
+            help=(
+                "Storage file mode. [1: <problem_name>/<team_name>,"
+                " 2: <team_name>/<problem_name>,"
+                " 3: <team_name>_<problem_name>]"
+            ),
+        ),
+    ] = 1,
+    path: Annotated[
+        str | None,
+        typer.Option(help="Export path."),
+    ] = None,
+    strict: Annotated[bool, typer.Option(help="Strict mode.")] = False,
+    is_extract: Annotated[
+        bool,
+        typer.Option(help="Extract file?"),
+    ] = True,
+) -> None:
     """
-    Download a submission source code files.
-    Args:
-        cid: Contest id.
-        id: Submission id.
-        mode: Output path format mode.
-        path: Output path.
-        strict:
-        is_extract: unzip file if true.
+    Download a submission files.
     """
     client = get_or_ask_config(general_state["config"])
     asyncio.run(
@@ -79,34 +78,40 @@ def submission_file(
 
 @app.command()
 def contest_files(
-    cid: str,
-    mode: int = typer.Argument(
-        default=2,
-        help="""
-        Output path format mode:\n
-        mode=1: team_name/problem_name/submission_file.
-        mode=2: problem_name/team_name/submission_file.
-        other: contest_id/submission_file
-        """,
-    ),
-    path: Optional[str] = None,
-    strict: Optional[bool] = False,
-    is_extract: bool = True,
-):
+    cid: Annotated[str, typer.Argument(help="Contest id.")],
+    language_id: Annotated[
+        str | None,
+        typer.Option(help="Language id."),
+    ] = None,
+    mode: Annotated[
+        int,
+        typer.Argument(
+            help=(
+                "Storage file mode. [1: <problem_name>/<team_name>,"
+                " 2: <team_name>/<problem_name>,"
+                " 3: <team_name>_<problem_name>]"
+            ),
+        ),
+    ] = 1,
+    path: Annotated[
+        str | None,
+        typer.Option(help="Export path."),
+    ] = None,
+    strict: Annotated[bool, typer.Option(help="Strict mode.")] = False,
+    is_extract: Annotated[
+        bool,
+        typer.Option(help="Extract file?"),
+    ] = True,
+) -> None:
     """
-    Download a contest all submissions source code files.
-    Args:
-        cid: Contest id.
-        mode: Output path format mode.
-        path: Output path.
-        strict:
-        is_extract: unzip file if true.
+    Download all submissions in contest.
     """
     client = get_or_ask_config(general_state["config"])
     asyncio.run(
         download_contest_files(
             client,
             cid,
+            language_id,
             mode,
             path,
             strict,

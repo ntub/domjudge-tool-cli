@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 import aiofiles
 import typer
 from aiofiles import os as aio_os
@@ -10,16 +8,15 @@ from domjudge_tool_cli.services.web import DomServerWebGateway
 
 async def download_problems_zips(
     client: DomServerClient,
-    exclude: Optional[List[str]] = None,
-    only: Optional[List[str]] = None,
-    folder: Optional[str] = None,
+    exclude: list[str] | None = None,
+    only: list[str] | None = None,
+    folder: str | None = None,
 ) -> None:
-    if not folder:
-        folder = "export_problems"
+    target_folder = folder or "export_problems"
 
-    is_dir = await aio_os.path.isdir(folder)
+    is_dir = await aio_os.path.isdir(target_folder)
     if not is_dir:
-        await aio_os.makedirs(folder, exist_ok=True)
+        await aio_os.makedirs(target_folder, exist_ok=True)
 
     DomServerWeb = DomServerWebGateway(client.version)
     async with DomServerWeb(**client.api_params) as web:
@@ -29,7 +26,7 @@ async def download_problems_zips(
         with typer.progressbar(problems, label="Download problems:") as progress:
             for problem in progress:
                 export_file_path = problem.export_file_path
-                disk_file_path = f"{folder}/{problem.id}_{problem.name}.zip"
+                disk_file_path = f"{target_folder}/{problem.id}_{problem.name}.zip"
                 disk_file_path = disk_file_path.replace(" ", "-")
                 if not export_file_path:
                     continue
