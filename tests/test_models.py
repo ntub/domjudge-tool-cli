@@ -159,3 +159,15 @@ def test_team_and_problem_models() -> None:
         }
     )
     assert item.export_file_path is None
+
+
+def test_domserver_client_null_timeout() -> None:
+    json_str = """{
+        "host": "https://domjudge.example.com",
+        "username": "user",
+        "password": "pwd",
+        "timeout": null
+    }"""
+    client = DomServerClient.model_validate_json(json_str)
+    assert client.timeout is None
+    assert client.get_timeout is None

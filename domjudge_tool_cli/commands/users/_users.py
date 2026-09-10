@@ -94,36 +94,65 @@ async def get_user(
 
 async def create_team_and_user(
     client: DomServerClient,
-    user: CreateUser,
-    category_id: int,
-    affiliation_id: int,
-    user_roles: list[int],
+    user: CreateUser | User,
+    category_id: int | None = None,
+    affiliation_id: int | None = None,
+    user_roles: list[int] | None = None,
     enabled: bool = True,
     password_length: int = 10,
     password_pattern: str | None = None,
     new_password: bool = False,
 ) -> CreateUser:
     if not category_id:
-        raise ValueError("Missing category_id")
-
-    if not affiliation_id:
-        raise ValueError("Missing affiliation_id")
+        category_id = client.category_id
 
     if not user_roles:
-        raise ValueError("Missing user_roles")
+        user_roles = client.user_roles
+
+    if not user.password or new_password:
+        user.password = gen_password(password_length, password_pattern)
 
     DomServerWeb = DomServerWebGateway(client.version)
     async with DomServerWeb(**client.api_params) as web:
         await web.login()
+        if not affiliation_id and not user.affiliation:
+            affiliation_id = client.affiliation_id
+        elif user.affiliation:
+            affiliation = await web.get_affiliation(user.affiliation)
 
-        if user.is_exist:
-            user_model = User(**user.model_dump())
+            if affiliation and affiliation.id:
+                affiliation_id = (
+                    int(affiliation.id) if affiliation.id.isdigit() else None
+                )
+            else:
+                name = user.affiliation
+                affiliation = await web.create_affiliation(
+                    name,
+                    name,
+                    client.affiliation_country or "TWN",
+                )
+                if affiliation and affiliation.id:
+                    affiliation_id = (
+                        int(affiliation.id) if affiliation.id.isdigit() else None
+                    )
+
+        if affiliation_id is None:
+            raise ValueError("Missing affiliation_id")
+
+        if category_id is None:
+            raise ValueError("Missing category_id")
+
+        if user_roles is None:
+            raise ValueError("Missing user_roles")
+
+        if isinstance(user, User):
             team_id, user_id = await web.update_team(
-                user_model,
+                user,
                 category_id,
                 affiliation_id,
                 enabled,
             )
+            result_user = CreateUser.from_user(user)
         else:
             team_id, user_id = await web.create_team_and_user(
                 user,
@@ -131,18 +160,16 @@ async def create_team_and_user(
                 affiliation_id,
                 enabled,
             )
+            result_user = user
 
-        if not user.password or new_password:
-            password = gen_password(password_length, password_pattern)
-            await web.set_user_password(
-                user_id,
-                password,
-                user_roles,
-                enabled,
-            )
-            user.password = password
+        await web.set_user_password(
+            user_id,
+            result_user.password or "",
+            user_roles,
+            enabled,
+        )
 
-        return user
+        return result_user
 
 
 async def create_teams_and_users(
@@ -234,16 +261,35 @@ async def create_teams_and_users(
 
 async def delete_teams_and_users(
     client: DomServerClient,
-    delete_users: list[str],
-    delete_teams: list[str],
+    include: list[str] | None = None,
+    exclude: list[str] | None = None,
 ) -> None:
     default_ignore_users = ["admin", "judgehost", client.username]
-    delete_users_set = {it for it in delete_users if it not in default_ignore_users}
+    default_ignore_users_lower = {u.lower() for u in default_ignore_users}
+
+    async with UsersAPI(**client.api_params) as api:
+        users = await api.all_users()
+
+    existing_users = [it.username for it in users]
+
+    effective_exclude = list(exclude) if exclude else list(default_ignore_users)
+    effective_include = list(include) if include else list(existing_users)
+
+    effective_include = [
+        it for it in effective_include if it.lower() not in default_ignore_users_lower
+    ]
+
+    include_teams = [
+        it.team_id for it in users if it.username in effective_include and it.team_id
+    ]
+    exclude_teams = [
+        it.team_id for it in users if it.username in effective_exclude and it.team_id
+    ]
 
     DomServerWeb = DomServerWebGateway(client.version)
     async with DomServerWeb(**client.api_params) as web:
         await web.login()
-        typer.echo(f"Delete existing users: {','.join(delete_users_set)}")
-        await web.delete_users(list(delete_users_set))
-        typer.echo(f"Delete existing teams: {','.join(delete_teams)}")
-        await web.delete_teams(delete_teams)
+        typer.echo("Delete users.")
+        await web.delete_users(effective_include, effective_exclude)
+        typer.echo("Delete teams.")
+        await web.delete_teams(include_teams, exclude_teams)

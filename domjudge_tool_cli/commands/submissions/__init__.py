@@ -43,12 +43,13 @@ def submission_file(
         int,
         typer.Argument(
             help=(
-                "Storage file mode. [1: <problem_name>/<team_name>,"
-                " 2: <team_name>/<problem_name>,"
-                " 3: <team_name>_<problem_name>]"
+                "Output path format mode:\n"
+                "mode=1: team_name/problem_name/submission_file.\n"
+                "mode=2: problem_name/team_name/submission_file.\n"
+                "other: contest_id/submission_file"
             ),
         ),
-    ] = 1,
+    ] = 2,
     path: Annotated[
         str | None,
         typer.Option(help="Export path."),
@@ -87,12 +88,13 @@ def contest_files(
         int,
         typer.Argument(
             help=(
-                "Storage file mode. [1: <problem_name>/<team_name>,"
-                " 2: <team_name>/<problem_name>,"
-                " 3: <team_name>_<problem_name>]"
+                "Output path format mode:\n"
+                "mode=1: team_name/problem_name/submission_file.\n"
+                "mode=2: problem_name/team_name/submission_file.\n"
+                "other: contest_id/submission_file"
             ),
         ),
-    ] = 1,
+    ] = 2,
     path: Annotated[
         str | None,
         typer.Option(help="Export path."),

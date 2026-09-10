@@ -9,7 +9,7 @@ class DomServerClient(BaseModel):
     username: str
     password: str
     disable_ssl: bool = False
-    timeout: float = 60.0
+    timeout: float | None = 60.0
     max_connections: int | None = None
     max_keepalive_connections: int | None = None
     category_id: int | None = None

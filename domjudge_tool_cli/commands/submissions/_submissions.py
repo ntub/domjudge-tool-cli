@@ -5,6 +5,7 @@ from tablib import Dataset
 
 from domjudge_tool_cli.models import DomServerClient, Submission
 from domjudge_tool_cli.services.api.v4 import (
+    JudgementAPI,
     JudgementTypeAPI,
     ProblemsAPI,
     SubmissionsAPI,
@@ -36,12 +37,20 @@ def file_path(
     team: Any,
     problem: Any,
 ) -> str:
+    team_name = getattr(team, "name", str(team))
+    problem_name = getattr(problem, "short_name", None) or getattr(
+        problem, "name", str(problem)
+    )
+
     if mode == 1:
-        filepath = f"{path}/{cid}/{problem.name}/{team.name}"
+        filepath = f"team_{team_name}/problem_{problem_name}"
     elif mode == 2:
-        filepath = f"{path}/{cid}/{team.name}/{problem.name}"
+        filepath = f"problem_{problem_name}/team_{team_name}"
     else:
-        filepath = f"{path}/{cid}/{team.name}_{problem.name}"
+        filepath = f"contest_{cid}"
+
+    if path:
+        filepath = f"{path}/{filepath}"
 
     return filepath
 
@@ -60,7 +69,18 @@ async def judgement_submission_mapping(
     async with JudgementTypeAPI(**client.api_params) as api:
         judgement_types = await api.all_judgement_types(cid)
 
-    return {it.id: it.name for it in judgement_types}
+    async with JudgementAPI(**client.api_params) as api:
+        judgements = await api.all_judgements(cid)
+
+    judgement_type_mapping = {
+        item.id: str(item.name).lower().replace(" ", "_") for item in judgement_types
+    }
+    return {
+        item.submission_id: judgement_type_mapping.get(
+            item.judgement_type_id or "", "NoJudgement"
+        )
+        for item in judgements
+    }
 
 
 async def get_submissions(
@@ -85,7 +105,7 @@ async def download_submission_files(
     client: DomServerClient,
     cid: str,
     id: str,
-    mode: int = 1,
+    mode: int = 2,
     path: str | None = None,
     strict: bool = False,
     is_extract: bool = True,
@@ -122,7 +142,7 @@ async def download_contest_files(
     client: DomServerClient,
     cid: str,
     language_id: str | None = None,
-    mode: int = 1,
+    mode: int = 2,
     path: str | None = None,
     strict: bool = False,
     is_extract: bool = True,

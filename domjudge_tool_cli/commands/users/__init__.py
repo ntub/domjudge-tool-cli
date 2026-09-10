@@ -143,20 +143,20 @@ def import_users_teams(
 
 @app.command()
 def rm_teams_and_users(
-    delete_users: Annotated[
-        list[str],
-        typer.Option("--user", help="Delete user usernames"),
-    ],
-    delete_teams: Annotated[
-        list[str],
-        typer.Option("--team", help="Delete team ids"),
-    ],
+    include: Annotated[
+        list[str] | None,
+        typer.Option(help="Include usernames/teams to delete"),
+    ] = None,
+    exclude: Annotated[
+        list[str] | None,
+        typer.Option(help="Exclude usernames/teams from deletion"),
+    ] = None,
 ) -> None:
     client = get_or_ask_config(general_state["config"])
     asyncio.run(
         delete_teams_and_users(
             client,
-            delete_users,
-            delete_teams,
+            include,
+            exclude,
         )
     )
