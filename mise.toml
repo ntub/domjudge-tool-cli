@@ -6,6 +6,7 @@ uv = "0.12.12"
 
 [env]
 UV_PYTHON = { value = "{{ tools.python.path }}", tools = true }
+UV_MANAGED_PYTHON = "0"
 
 [settings]
 lockfile = true
@@ -34,5 +35,3 @@ run = "uv build"
 
 [tasks.check]
 depends = ["format-check", "lint", "typecheck", "test"]
-depends_post = []
-wait_for = []
