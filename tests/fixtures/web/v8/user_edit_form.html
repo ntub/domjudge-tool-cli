@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+<body>
+<form method="post" action="/jury/users/7/edit">
+  <input name="user[username]" value="user1">
+  <input name="user[name]" value="Team Alpha">
+  <input name="user[email]" value="user1@example.org">
+  <input name="user[plainPassword]" value="">
+  <input type="checkbox" name="user[enabled]" value="1" checked>
+  <select name="user[user_roles][]" multiple>
+    <option value="3" selected>Team Member</option>
+    <option value="5">observer</option>
+  </select>
+</form>
+</body>
+</html>

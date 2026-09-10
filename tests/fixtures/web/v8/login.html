@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- DOMjudge version 8.3.1 -->
+    <meta charset="utf-8">
+    <title>DOMjudge Login</title>
+    <link rel="icon" href="/favicon.ico?v=8.3.1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css?v=8.3.1">
+    <link rel="stylesheet" href="/css/fontawesome-all.min.css?v=8.3.1">
+    <script src="/js/jquery.min.js?v=8.3.1"></script>
+    <script src="/js/jquery.debounce.min.js?v=8.3.1"></script>
+    <script src="/js/bootstrap.bundle.min.js?v=8.3.1"></script>
+
+    <script src="/js/domjudge.js?v=8.3.1"></script>
+            <link rel="stylesheet" href="/style_login.css?v=8.3.1">
+    </head>
+<body>
+<main>
+        
+    <div class="form-signin" id="loginform">
+        <img class="mb-4" src="/images/DOMjudgelogo.svg?v=8.3.1" alt="DOMjudge" width="72">
+                                
+        <br class="clearfix">
+
+        
+        <div class="main-login ms-2 regularLoginform ">
+            <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
+            <form action="/login" method="post">
+                <input type="hidden" name="_csrf_token" value="TEST_CSRF_TOKEN">
+                <div class="login-content">
+                    
+                    <div class="form-floating">
+                        <input type="text" id="username" name="_username" class="form-control"
+                               placeholder="Username" required autofocus>
+                        <label for="username">Username</label>
+                    </div>
+                    <div class="form-floating">
+                        <input type="password" id="inputPassword" name="_password"
+                               class="form-control" spellcheck="false"
+                               placeholder="Password" required autocomplete="current-password">
+                        <label for="inputPassword">Password</label>
+                    </div>
+                </div>
+                <button class="btn btn-lg btn-primary w-100" type="submit">Sign in</button>
+                            </form>
+        </div>
+
+        <p class="mt-5 mb-3 small text-muted" id="dj_version">DOMjudge 8.3.1</p>
+    </div>
+</main>
+
+
+<script>
+            var domjudge_base_url = "";
+        var markdownPreviewUrl = "/markdown-preview";
+    $(function () {
+        /* toggle refresh if set */
+                /* Enable page refresh if set if wanted by the page, and wanted by the user */
+        
+        initializeAjaxModals();
+    });
+</script>
+</body>
+</html>

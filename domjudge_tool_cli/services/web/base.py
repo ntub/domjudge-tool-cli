@@ -6,26 +6,52 @@ from domjudge_tool_cli.models import Affiliation, CreateUser, ProblemItem, User
 from domjudge_tool_cli.services.api_client import WebClient
 
 
-def _get_input_fields(page: str) -> dict[str, str | None]:
+def _get_input_fields(page: str) -> dict[str, str | list[str]]:
     soup = BeautifulSoup(page, "html.parser")
-    data: dict[str, str | None] = {}
+    data: dict[str, str | list[str]] = {}
 
-    for ele in soup.select("input"):
+    for ele in soup.find_all(["input", "textarea", "select"]):
         name = ele.get("name")
-        val = ele.get("value")
-        if isinstance(name, str):
-            data[name] = val if isinstance(val, str) else None
+        if not isinstance(name, str) or not name:
+            continue
 
-    for tag in soup.select("select"):
-        name = tag.get("name")
-        if isinstance(name, str):
-            option = tag.select_one("option[selected]")
-            if option is not None:
-                val = option.get("value")
-                data[name] = val if isinstance(val, str) else None
+        if ele.name == "input":
+            type_attr = ele.get("type")
+            type_ = type_attr.lower() if isinstance(type_attr, str) else "text"
+            if type_ in ("checkbox", "radio"):
+                if ele.get("checked") is None:
+                    continue
+                if ele.has_attr("value"):
+                    val = ele.get("value")
+                    val_str = val if isinstance(val, str) else ""
+                else:
+                    val_str = "on"
+
+                if name in data:
+                    existing = data[name]
+                    if isinstance(existing, list):
+                        existing.append(val_str)
+                    else:
+                        data[name] = [existing, val_str]
+                else:
+                    data[name] = val_str
             else:
-                data[name] = None
-
+                val = ele.get("value")
+                data[name] = val if isinstance(val, str) else ""
+        elif ele.name == "textarea":
+            data[name] = ele.text
+        elif ele.name == "select":
+            selected_opts = ele.select("option[selected]")
+            if not selected_opts:
+                continue
+            vals: list[str] = []
+            for opt in selected_opts:
+                opt_val = opt.get("value")
+                vals.append(opt_val if isinstance(opt_val, str) else "")
+            if len(vals) == 1:
+                data[name] = vals[0]
+            else:
+                data[name] = vals
     return data
 
 

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- DOMjudge version 8.3.1 -->
+    <meta charset="utf-8">
+    <title>Teams - DOMjudge</title>
+    <link rel="icon" href="/favicon.ico?v=8.3.1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css?v=8.3.1">
+    <link rel="stylesheet" href="/css/fontawesome-all.min.css?v=8.3.1">
+    <script src="/js/jquery.min.js?v=8.3.1"></script>
+    <script src="/js/jquery.debounce.min.js?v=8.3.1"></script>
+    <script src="/js/bootstrap.bundle.min.js?v=8.3.1"></script>
+
+    <script src="/js/domjudge.js?v=8.3.1"></script>
+                        <link rel="stylesheet" href="/style_domjudge.css?v=8.3.1">
+
+        
+    
+    <link rel="stylesheet" href="/style_jury.css?v=8.3.1">
+
+    
+    <link rel="stylesheet" href="/css/dataTables.bootstrap5.min.css?v=8.3.1">
+    <script src="/js/dataTables.min.js?v=8.3.1"></script>
+    <script src="/js/dataTables.bootstrap5.min.js?v=8.3.1"></script>
+    <style>
+        .data-table td a:not(.showlink), .data-table td a:hover:not(.showlink) {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .data-table th {
+            white-space: nowrap;
+        }
+
+        .data-table td {
+            white-space: nowrap;
+            padding-top: 1px;
+            padding-bottom: 1px;
+        }
+
+        .dataTables_filter {
+            text-align: inherit;
+        }
+
+        .table-wrapper {
+            display: inline-block;
+        }
+    </style>
+
+    </head>
+<body>
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top ">
+  <div class="container-fluid">
+    <a class="navbar-brand hidden-sm-down" href="/jury">DOMjudge</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuDefault" aria-controls="menuDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+
+    
+    <div class="collapse navbar-collapse" id="menuDefault" data-update-url="/jury/updates">
+        <ul class="navbar-nav me-auto">
+
+            
+                            <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownJudgehosts" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-gavel"></i> judgehosts
+                        <span class="badge text-bg-warning" id="num-alerts-judgehosts"></span>
+                        <span class="badge text-bg-danger" id="num-alerts-internalerrors"></span>
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                        <a class="dropdown-item " href="/jury/judgehosts" id="menu_judgehosts">
+                            <i class="fas fa-server fa-fw"></i> judgehosts <span class="badge text-bg-warning" id="num-alerts-judgehosts-sub"></span>
+                        </a>
+                        <a class="dropdown-item dropdown-disabled " href="/jury/internal-errors" id="menu_internal_error">
+                            <i class="fas fa-bolt fa-fw"></i> internal error <span class="badge text-bg-danger" id="num-alerts-internalerrors-sub"></span>
+                        </a>
+                    </div>
+                </li>
+            
+                            <li class="nav-item">
+                    <a class="nav-link" href="/jury/clarifications" id="menu_clarifications"><i class="fas fa-comments"></i> clarifications <span class="badge text-bg-info" id="num-alerts-clarifications"></span></a>
+                </li>
+            
+                            <li class="nav-item">
+                    <a class="nav-link" href="/jury/submissions"><i class="fas fa-file-code"></i> submissions</a>
+                </li>
+
+                
+                <li class="nav-item">
+                    <a class="nav-link" href="/jury/rejudgings" id="menu_rejudgings"><i class="fas fa-sync"></i> rejudgings <span class="badge text-bg-info" id="num-alerts-rejudgings"></span></a>
+                </li>
+            
+                            <li class="nav-item">
+                    <a class="nav-link" href="/jury/scoreboard"><i class="fas fa-list-ol"></i> scoreboard</a>
+                </li>
+                                </ul>
+
+        
+        <ul class="navbar-nav ml-auto">
+
+                                        <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="fas fa-user"></i> admin
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                                                    <a class="dropdown-item disabled" href="#">Administrator</a>
+                        
+                        <a class="dropdown-item d-none" href="#" id="notify_disable">
+                            <i class="fas fa-bell-slash fa-fw"></i> Disable Notifications
+                        </a>
+                        <a class="dropdown-item d-none" href="#" id="notify_enable">
+                            <i class="fas fa-bell fa-fw"></i> Enable Notifications
+                        </a>
+
+                        
+                        <a class="dropdown-item d-none" href="#" id="keys_disable">
+                            <i class="fas fa-keyboard fa-fw"></i> Disable keyboard shortcuts
+                        </a>
+                        <a class="dropdown-item d-none" href="#" id="keys_enable">
+                            <i class="fas fa-keyboard fa-fw"></i> Enable keyboard shortcuts
+                        </a>
+
+                        <a class="dropdown-item" href="/logout"><i class="fas fa-sign-out-alt fa-fw"></i>Logout </a>
+                    </div>
+                </li>
+            
+            <li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownContests" role="button" data-bs-toggle="dropdown"
+       aria-haspopup="true" aria-expanded="false">
+        <i class="fas fa-trophy"></i> TQC_PY_01
+    </a>
+    <div class="dropdown-menu scrollable-menu" aria-labelledby="navbarDropdown" data-current-contest="">
+        <a class="dropdown-item disabled" href="#">Change Contest</a>
+                    <a class="dropdown-item" href="/jury/change-contest/-1">no contest</a>
+            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item"
+               href="/jury/change-contest/3">FIRST</a>
+                    <a class="dropdown-item"
+               href="/jury/change-contest/4">TQC_PY_02</a>
+                    <a class="dropdown-item"
+               href="/jury/change-contest/5">TQC_PY_03</a>
+                    <a class="dropdown-item"
+               href="/jury/change-contest/6">TQC_PY_04</a>
+                    <a class="dropdown-item"
+               href="/jury/change-contest/7">TQC_PY_06</a>
+                    <a class="dropdown-item"
+               href="/jury/change-contest/8">LOOP_PRACTICE</a>
+                    <a class="dropdown-item"
+               href="/jury/change-contest/9">TQC_PY_07</a>
+                    <a class="dropdown-item"
+               href="/jury/change-contest/10">TQC_PY_05</a>
+                    <a class="dropdown-item"
+               href="/jury/change-contest/11">TQC_PY_08</a>
+                    <a class="dropdown-item"
+               href="/jury/change-contest/12">Test_CSharp</a>
+            </div>
+</li>
+        </ul>
+        <div class="navbar-text" style="white-space:nowrap;">
+    <span style="padding-left: 10px;">
+        <i class="fas fa-clock loading-indicator"></i>
+    </span>
+        <span id="timeleft">3497d 21:18:31</span>
+</div>
+
+<script>
+    var initial = 12345;
+    var localInitial = new Date().getTime();
+    var activatetime = 12345;
+    var starttime = 12345;
+    var endtime = 12345;
+    var clientOffset = localInitial - new Date(initial * 1000).getTime();
+    var timeleftelt = document.getElementById("timeleft");
+
+    setInterval(function () {
+        updateClock();
+    }, 1000);
+    updateClock();
+</script>
+    </div>
+  </div>
+</nav>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                                                                        
+
+                    
+    <h1>Teams</h1>
+
+        <div class="table-wrapper">
+        <table style="width:auto" class="data-table table table-sm table-striped
+                ">
+            <thead class="">
+            <tr>
+                    <th scope="col" class="sortable searchable">ID</th>
+                    <th scope="col" class="sortable searchable">label</th>
+                    <th scope="col" class="sortable searchable">name</th>
+                    <th scope="col" class="sortable searchable">category</th>
+                    <th scope="col" class="sortable searchable">affiliation</th>
+                    <th scope="col" class="sortable searchable"># contests</th>
+                    <th scope="col" class="sortable searchable">last IP</th>
+                    <th scope="col" class="sortable searchable">location</th>
+                    <th scope="col" class=" searchable"></th>
+                    <th scope="col" class="sortable searchable">stats</th>
+                        <th scope="col"></th>
+                        <th scope="col"></th>
+                        <th scope="col"></th>
+            </tr>
+            </thead>
+            <tbody><tr class="category7">
+                        <td
+                           class=""                                ><a href="/jury/teams/10">                            10                            </a>                        </td>
+                        <td
+                           class=""                                ><a href="/jury/teams/10">                                                        </a>                        </td>
+                        <td
+                           class=""                                ><a href="/jury/teams/10">                            Lanster.Chen                            </a>                        </td>
+                        <td
+                           class=""                                ><a href="/jury/teams/10">                            Python Class 202603                            </a>                        </td>
+                        <td
+                           class="" title="Taiwan"                                ><a href="/jury/teams/10">                            TW                            </a>                        </td>
+                        <td
+                           class=""                                ><a href="/jury/teams/10">                            10                            </a>                        </td>
+                        <td
+                           class="text-monospace small"                                ><a href="/jury/teams/10">                            192.0.2.1                            </a>                        </td>
+                        <td
+                           class=""                                ><a href="/jury/teams/10">                                                        </a>                        </td>
+                        <td
+                           class=" text-success" title="correct submissions(s)"                                ><a href="/jury/teams/10">                            <i class="fas fa-check-circle" aria-hidden="true"></i><span class="sr-only">ok</span>                            </a>                        </td>
+                        <td
+                           class="text-right" title="72 correct / 95 submitted"                                ><a href="/jury/teams/10">                            72/95                            </a>                        </td>
+                        <td>
+                                <a  href="/jury/teams/10/edit" title="edit this team" >
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                        </td>
+                        <td>
+                                <a  href="/jury/teams/10/delete" title="delete this team" data-ajax-modal>
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                        </td>
+                        <td>
+                                <a  href="/jury/clarifications/send?teamto=10" title="send clarification to this team" >
+                                    <i class="fas fa-envelope"></i>
+                                </a>
+                        </td>
+                </tr><tr class="category7">
+                        <td
+                           class=""                                ><a href="/jury/teams/9">                            9                            </a>                        </td>
+                        <td
+                           class=""                                ><a href="/jury/teams/9">                                                        </a>                        </td>
+                        <td
+                           class=""                                ><a href="/jury/teams/9">                            anne26a                            </a>                        </td>
+                        <td
+                           class=""                                ><a href="/jury/teams/9">                            Python Class 202603                            </a>                        </td>
+                        <td
+                           class="" title="Taiwan"                                ><a href="/jury/teams/9">                            TW                            </a>                        </td>
+                        <td
+                           class=""                                ><a href="/jury/teams/9">                            10                            </a>                        </td>
+                        <td
+                           class="text-monospace small"                                ><a href="/jury/teams/9">                            192.0.2.1                            </a>                        </td>
+                        <td
+                           class=""                                ><a href="/jury/teams/9">                                                        </a>                        </td>
+                        <td
+                           class=" text-success" title="correct submissions(s)"                                ><a href="/jury/teams/9">                            <i class="fas fa-check-circle" aria-hidden="true"></i><span class="sr-only">ok</span>                            </a>                        </td>
+                        <td
+                           class="text-right" title="28 correct / 37 submitted"                                ><a href="/jury/teams/9">                            28/37                            </a>                        </td>
+                        <td>
+                                <a  href="/jury/teams/9/edit" title="edit this team" >
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                        </td>
+                        <td>
+                                <a  href="/jury/teams/9/delete" title="delete this team" data-ajax-modal>
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                        </td>
+                        <td>
+                                <a  href="/jury/clarifications/send?teamto=9" title="send clarification to this team" >
+                                    <i class="fas fa-envelope"></i>
+                                </a>
+                        </td>
+                </tr><tr class="category7">
+                        <td
+                           class=""                                ><a href="/jury/teams/20">                            20                            </a>                        </td>
+                        <td
+                           class=""                                ><a href="/jury/teams/20">                                                        </a>                        </td>
+                        <td
+                           class=""                                ><a href="/jury/teams/20">                            cindy950093                            </a>                        </td>
+                        <td
+                           class=""                                ><a href="/jury/teams/20">                            Python Class 202603                            </a>                        </td>
+                        <td
+                           class="" title="Taiwan"                                ><a href="/jury/teams/20">                            TW                            </a>                        </td>
+                        <td
+                           class=""                                ><a href="/jury/teams/20">                            10                            </a>                        </td>
+                        <td
+                           class="text-monospace small"                                ><a href="/jury/teams/20">                            192.0.2.1                            </a>                        </td>
+                        <td
+                           class=""                                ><a href="/jury/teams/20">                                                        </a>                        </td>
+                        <td
+                           class=" text-success" title="correct submissions(s)"                                ><a href="/jury/teams/20">                            <i class="fas fa-check-circle" aria-hidden="true"></i><span class="sr-only">ok</span>                            </a>                        </td>
+                        <td
+                           class="text-right" title="49 correct / 58 submitted"                                ><a href="/jury/teams/20">                            49/58                            </a>                        </td>
+                        <td>
+                                <a  href="/jury/teams/20/edit" title="edit this team" >
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                        </td>
+                        <td>
+                                <a  href="/jury/teams/20/delete" title="delete this team" data-ajax-modal>
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
+                        </td>
+                        <td>
+                                <a  href="/jury/clarifications/send?teamto=20" title="send clarification to this team" >
+                                    <i class="fas fa-envelope"></i>
+                                </a>
+                        </td>
+                </tr></tbody>
+        </table>
+    </div>
+    <script>
+        $().ready(function () {
+            $('.data-table').DataTable({
+                "paging": false,
+                "retrieve": true,
+                "searching": true,
+                "ordering": true,
+                "order": [[ 0, 'asc']],
+                "info": false,
+                "autoWidth": true,
+                "language": {
+                    "searchPlaceholder": "filter table",
+                    "search": "_INPUT_",
+                },
+                'aoColumnDefs': [
+                    {aTargets: ['sortable'], bSortable: true},
+                    {aTargets: ['searchable'], bSearchable: true},
+                    {aTargets: ['_all'], bSortable: false, bSearchable: false}
+                ],
+            });
+        });
+    </script>
+
+        <p>
+            <a href="/jury/teams/add" class="btn btn-primary" title="Add new team"><i class="fas fa-plus"></i>&nbsp;Add new team</a>
+            <a href="/jury/import-export#teams" class="btn btn-primary" title="Import teams"><i class="fas fa-upload"></i>&nbsp;Import teams</a>
+        </p>            </div>
+        </div>
+    </div>
+
+<script>
+            var domjudge_base_url = "";
+        var markdownPreviewUrl = "/markdown-preview";
+    $(function () {
+        /* toggle refresh if set */
+                /* Enable page refresh if set if wanted by the page, and wanted by the user */
+        
+        initializeAjaxModals();
+    });
+</script>
+    <script>
+        $(function () {
+            /* Show the notification options if the browser supports it */
+            if ('Notification' in window) {
+                $('#notify_disable').click(disableNotifications);
+                $('#notify_enable').click(enableNotifications);
+                if (getCookie('domjudge_notify') != 1) {
+                    $('#notify_enable').removeClass('d-none');
+                } else {
+                    $('#notify_disable').removeClass('d-none');
+                }
+            }
+
+            $('#keys_disable').click(disableKeys);
+            $('#keys_enable').click(enableKeys);
+            var keysCookie = getCookie('domjudge_keys');
+            if (keysCookie != 1 && keysCookie != "") {
+                $('#keys_enable').removeClass('d-none');
+            } else {
+                $('#keys_disable').removeClass('d-none');
+            }
+
+            updateMenuAlerts();
+            setInterval(updateMenuAlerts, 20000);
+
+            $('[data-bs-toggle="tooltip"]').tooltip();
+        });
+
+        initializeKeyboardShortcuts();
+    </script>
+
+    <div class="container d-none" id="keyhelp">
+        <h1>Keyboard shortcuts</h1>
+
+        <code>?</code> display this help, <code>Escape</code> to exit <br/>
+        <br/>
+
+        <code>j</code> go to the next item, e.g. next submission <br/>
+        <code>k</code> go to the previous item, e.g. previous submission <br/>
+        <br/>
+
+        <code>s</code> <code>↵</code> open the list of submissions <br/>
+        <code>s</code> <code>[0-9]+</code> <code>↵</code> open a specific submission, e.g. <code>s42↵</code> to go to submission 42 <br/>
+        <br/>
+
+        <code>t</code> <code>↵</code> open the list of teams <br/>
+        <code>t</code> <code>[0-9]+</code> <code>↵</code> open to a specific team <br/>
+        <br/>
+
+        <code>p</code> <code>↵</code> open the list of problems <br/>
+        <code>p</code> <code>[0-9]+</code> <code>↵</code> open a specific problem <br/>
+        <br/>
+
+        <code>c</code> <code>↵</code> open the list of clarifications <br/>
+        <code>c</code> <code>[0-9]+</code> <code>↵</code> open a specific clarification <br/>
+        <br/>
+
+        <code>Shift + j</code> <code>[0-9]+</code> <code>↵</code> open a specific judging <br/>
+        <br/>
+
+        <code>Shift + s</code> open the scoreboard<br/>
+        <br/>
+    </div>
+</body>
+</html>
