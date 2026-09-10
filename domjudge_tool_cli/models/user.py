@@ -1,25 +1,25 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Self
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class User(BaseModel):
-    last_login_time: Optional[str]
-    first_login_time: Optional[str]
-    team: Optional[str]
-    roles: List[str]
+    last_login_time: str | None = None
+    first_login_time: str | None = None
+    team: str | None = None
+    roles: list[str] = Field(default_factory=list)
     id: str
     username: str
     name: str
-    email: Optional[EmailStr]
-    last_ip: Optional[str]
-    ip: Optional[str]
-    enabled: bool
-    team_id: Optional[str]
-    affiliation: Optional[str] = None
-    password: Optional[str] = None
+    email: EmailStr | None = None
+    last_ip: str | None = None
+    ip: str | None = None
+    enabled: bool = True
+    team_id: str | None = None
+    affiliation: str | None = None
+    password: str | None = None
 
-    def update(self, **kwargs: Dict[str, Any]):
+    def update(self, **kwargs: Any) -> None:
         ignore_fields = {"id", "username", "team_id"}
         for key, value in kwargs.items():
             if key in ignore_fields:
@@ -32,16 +32,17 @@ class User(BaseModel):
 class CreateUser(BaseModel):
     username: str
     name: str
-    email: Optional[EmailStr] = None
-    password: Optional[str] = None
-    affiliation: Optional[str] = None
-    is_exist: Optional[bool] = None
+    email: EmailStr | None = None
+    password: str | None = None
+    affiliation: str | None = None
+    is_exist: bool | None = None
 
     @classmethod
-    def from_user(cls, user: "User", **kwargs: Dict[str, Any]):
-        user_info = dict(is_exist=True)
-        if user.dict():
-            user_info.update(user.dict())
+    def from_user(cls, user: "User", **kwargs: Any) -> Self:
+        user_info: dict[str, Any] = {"is_exist": True}
+        user_dict = user.model_dump()
+        if user_dict:
+            user_info.update(user_dict)
 
         if kwargs:
             user_info.update(kwargs)

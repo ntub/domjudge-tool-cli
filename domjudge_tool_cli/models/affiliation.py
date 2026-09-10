@@ -1,11 +1,9 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
 
 class Affiliation(BaseModel):
-    id: Optional[str]
+    id: str | None = None
     shortname: str
     name: str
     country: str
-    team_affiliation: Optional[str]
+    team_affiliation: str | None = None

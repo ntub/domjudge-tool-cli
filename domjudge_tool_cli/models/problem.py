@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
 
@@ -11,8 +9,8 @@ class Problem(BaseModel):
     time_limit: int
     externalid: str
     name: str
-    rgb: Optional[str] = None
-    color: Optional[str] = None
+    rgb: str | None = None
+    color: str | None = None
     test_data_count: int
 
 
@@ -21,4 +19,4 @@ class ProblemItem(BaseModel):
     time_limit: int
     test_data_count: int
     name: str
-    export_file_path: Optional[str]
+    export_file_path: str | None = None

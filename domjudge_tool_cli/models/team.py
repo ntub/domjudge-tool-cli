@@ -1,15 +1,13 @@
-from typing import List, Optional
-
 from pydantic import BaseModel
 
 
 class Team(BaseModel):
-    group_ids: List[str]
-    affiliation: Optional[str]
-    nationality: Optional[str]
+    group_ids: list[str]
+    affiliation: str | None = None
+    nationality: str | None = None
     id: str
-    icpc_id: Optional[str]
+    icpc_id: str | None = None
     name: str
-    display_name: Optional[str]
-    organization_id: Optional[str]
-    members: Optional[str]
+    display_name: str | None = None
+    organization_id: str | None = None
+    members: str | None = None

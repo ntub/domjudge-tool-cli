@@ -1,25 +1,23 @@
-from typing import Dict, List, Optional
-
 from pydantic import BaseModel
 
 
 class Submission(BaseModel):
-    language_id: Optional[str]
-    time: Optional[str]
-    contest_time: Optional[str]
+    language_id: str | None = None
+    time: str | None = None
+    contest_time: str | None = None
     id: str
-    externalid: Optional[str]
+    externalid: str | None = None
     team_id: str
     problem_id: str
-    entry_point: Optional[str]
-    files: Optional[List[Dict[str, str]]]
-    submission_id: Optional[str]
-    filename: Optional[str]
-    source: Optional[str]
+    entry_point: str | None = None
+    files: list[dict[str, str]] | None = None
+    submission_id: str | None = None
+    filename: str | None = None
+    source: str | None = None
 
 
 class SubmissionFile(BaseModel):
     id: str
-    submission_id: Optional[str]
-    filename: Optional[str]
-    source: Optional[str]
+    submission_id: str | None = None
+    filename: str | None = None
+    source: str | None = None
