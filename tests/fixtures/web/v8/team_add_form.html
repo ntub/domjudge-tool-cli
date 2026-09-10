@@ -1,0 +1,22 @@
+<!doctype html>
+<html>
+<body>
+<form method="post" action="/jury/teams/add">
+  <input name="team[name]" value="">
+  <input name="team[displayName]" value="">
+  <select name="team[category]">
+    <option value="1" selected>default</option>
+  </select>
+  <select name="team[affiliation]">
+    <option value="1" selected>course001</option>
+  </select>
+  <input name="team[penalty]" value="0">
+  <input type="checkbox" name="team[enabled]" value="1" checked>
+  <select name="team[addUserForTeam]">
+    <option value="">none</option>
+    <option value="create-new-user" selected>create new user</option>
+  </select>
+  <input name="team[newUsername]" value="">
+</form>
+</body>
+</html>
