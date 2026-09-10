@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any
 
 from domjudge_tool_cli.models import User
 from domjudge_tool_cli.services.api.v4.base import V4Client
@@ -7,11 +7,11 @@ from domjudge_tool_cli.services.api.v4.base import V4Client
 class UsersAPI(V4Client):
     async def all_users(
         self,
-        ids: Optional[List[str]] = None,
-        team_id: Optional[str] = None,
-    ) -> List[User]:
+        ids: list[str] | None = None,
+        team_id: str | None = None,
+    ) -> list[User]:
         path = self.make_resource("/users")
-        params = dict()
+        params: dict[str, Any] = {}
 
         if ids:
             params["ids[]"] = ids
@@ -23,13 +23,12 @@ class UsersAPI(V4Client):
             path,
             params if params else None,
         )
-        return list(map(lambda it: User(**it), result))
+        return [User.model_validate(it) for it in result]
 
     async def get_user(
         self,
         id: str,
     ) -> User:
         path = self.make_resource(f"/users/{id}")
-
         result = await self.get(path)
-        return User(**result)
+        return User.model_validate(result)

@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any, Self
 
 import httpx
 
@@ -7,32 +7,40 @@ class BaseClient:
     def __init__(
         self,
         host: str,
-        disable_ssl: Optional[bool] = None,
-        timeout: Optional[httpx.Timeout] = None,
-        limits: Optional[httpx.Limits] = None,
+        disable_ssl: bool = False,
+        timeout: httpx.Timeout | None = None,
+        limits: httpx.Limits | None = None,
+        **extra_params: Any,
     ):
         self.host = host
-        self._parameters = dict(base_url=host)
+        parameters: dict[str, Any] = {"base_url": host}
 
         if disable_ssl:
-            self._parameters["verify"] = not disable_ssl
+            parameters["verify"] = False
 
-        if timeout:
-            self._parameters["timeout"] = timeout
+        if timeout is not None:
+            parameters["timeout"] = timeout
 
-        if limits:
-            self._parameters["limits"] = limits
+        if limits is not None:
+            parameters["limits"] = limits
 
+        parameters.update(extra_params)
+        self._parameters = parameters
         self.client = self.new_client()
 
-    def new_client(self) -> "httpx.AsyncClient":
+    def new_client(self) -> httpx.AsyncClient:
         return httpx.AsyncClient(**self._parameters)
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> Self:
+        await self.client.__aenter__()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         await self.client.__aexit__(exc_type, exc_val, exc_tb)
+
+    @property
+    def is_closed(self) -> bool:
+        return self.client.is_closed
 
 
 class APIClient(BaseClient):
@@ -41,34 +49,35 @@ class APIClient(BaseClient):
         host: str,
         username: str,
         password: str,
-        disable_ssl: Optional[bool] = None,
-        timeout: Optional[httpx.Timeout] = None,
-        limits: Optional[httpx.Limits] = None,
+        disable_ssl: bool = False,
+        timeout: httpx.Timeout | None = None,
+        limits: httpx.Limits | None = None,
     ):
-        super().__init__(host, disable_ssl, timeout, limits)
         self.username = username
         self.password = password
-        self._parameters = dict(
-            base_url=host,
+        super().__init__(
+            host=host,
+            disable_ssl=disable_ssl,
+            timeout=timeout,
+            limits=limits,
             auth=httpx.BasicAuth(username, password),
         )
-        self.client = self.new_client()
 
     async def get(
         self,
         path: str,
-        params: Optional[Dict[str, Any]] = None,
+        params: dict[str, Any] | None = None,
     ) -> Any:
-        r = await self.client.get(path, params=params)  # type: httpx.Response
+        r = await self.client.get(path, params=params)
         r.raise_for_status()
         return r.json()
 
     async def get_file(
         self,
         path: str,
-        params: Optional[Dict[str, Any]] = None,
-    ) -> Any:
-        r = await self.client.get(path, params=params)  # type: httpx.Response
+        params: dict[str, Any] | None = None,
+    ) -> bytes:
+        r = await self.client.get(path, params=params)
         r.raise_for_status()
         return r.content
 
@@ -79,20 +88,25 @@ class WebClient(BaseClient):
         host: str,
         username: str,
         password: str,
-        disable_ssl: Optional[bool] = None,
-        timeout: Optional[httpx.Timeout] = None,
-        limits: Optional[httpx.Limits] = None,
+        disable_ssl: bool = False,
+        timeout: httpx.Timeout | None = None,
+        limits: httpx.Limits | None = None,
     ):
         self.username = username
         self.password = password
-        super().__init__(host, disable_ssl, timeout, limits)
+        super().__init__(
+            host=host,
+            disable_ssl=disable_ssl,
+            timeout=timeout,
+            limits=limits,
+        )
 
     async def get(
         self,
         path: str,
-        params: Optional[Dict[str, Any]] = None,
+        params: dict[str, Any] | None = None,
     ) -> httpx.Response:
-        r = await self.client.get(  # type: httpx.Response
+        r = await self.client.get(
             path,
             params=params,
             follow_redirects=True,
@@ -103,9 +117,9 @@ class WebClient(BaseClient):
     async def post(
         self,
         path: str,
-        body: Optional[Dict[str, Any]] = None,
+        body: dict[str, Any] | None = None,
     ) -> httpx.Response:
-        r = await self.client.post(  # type: httpx.Response
+        r = await self.client.post(
             path,
             data=body,
             follow_redirects=True,

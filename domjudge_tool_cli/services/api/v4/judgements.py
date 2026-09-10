@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any
 
 from domjudge_tool_cli.models import Judgement
 from domjudge_tool_cli.services.api.v4.base import V4Client
@@ -8,13 +8,13 @@ class JudgementAPI(V4Client):
     async def all_judgements(
         self,
         cid: str,
-        submission_id: Optional[str] = None,
-        result: Optional[str] = None,
-        strict: Optional[bool] = False,
-        ids: Optional[List[str]] = None,
-    ) -> List[Judgement]:
+        submission_id: str | None = None,
+        result: str | None = None,
+        strict: bool = False,
+        ids: list[str] | None = None,
+    ) -> list[Judgement]:
         path = self.make_resource(f"/contests/{cid}/judgements")
-        params = dict()
+        params: dict[str, Any] = {}
 
         if ids:
             params["ids[]"] = ids
@@ -33,9 +33,9 @@ class JudgementAPI(V4Client):
             params if params else None,
         )
 
-        return list(map(lambda it: Judgement(**it), response))
+        return [Judgement.model_validate(it) for it in response]
 
     async def judgement(self, cid: str, id: str) -> Judgement:
         path = self.make_resource(f"/contests/{cid}/judgements/{id}")
         result = await self.get(path)
-        return Judgement(**result)
+        return Judgement.model_validate(result)

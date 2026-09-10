@@ -3,7 +3,7 @@ import os
 import shutil
 from glob import glob
 from pathlib import Path
-from typing import List, Optional
+from typing import Any
 
 import aiofiles
 from aiofiles import os as aio_os
@@ -18,12 +18,12 @@ class SubmissionsAPI(V4Client):
     async def all_submissions(
         self,
         cid: str,
-        language_id: Optional[str] = None,
-        strict: Optional[bool] = False,
-        ids: Optional[List[str]] = None,
-    ) -> List[Submission]:
+        language_id: str | None = None,
+        strict: bool = False,
+        ids: list[str] | None = None,
+    ) -> list[Submission]:
         path = self.make_resource(f"/contests/{cid}/submissions")
-        params = dict()
+        params: dict[str, Any] = {}
 
         if ids:
             params["ids[]"] = ids
@@ -39,30 +39,31 @@ class SubmissionsAPI(V4Client):
             params if params else None,
         )
 
-        return list(map(lambda it: Submission(**it), result))
+        return [Submission.model_validate(it) for it in result]
 
     async def submission(self, cid: str, id: str) -> Submission:
         path = self.make_resource(f"/contests/{cid}/submissions/{id}")
         result = await self.get(path)
-        return Submission(**result)
+        return Submission.model_validate(result)
 
     async def submission_files(
         self,
         cid: str,
         id: str,
         filename: str,
-        file_path: Optional[str] = None,
-        strict: Optional[bool] = False,
+        file_path: str | None = None,
+        strict: bool = False,
         is_extract: bool = False,
     ) -> str:
-        is_dir = await aio_os.path.isdir(file_path)
+        target_dir = str(Path(file_path or ".").expanduser().resolve())
+        is_dir = await aio_os.path.isdir(target_dir)
         if not is_dir:
-            await aio_os.makedirs(file_path, exist_ok=True)
+            await aio_os.makedirs(target_dir, exist_ok=True)
 
         path = self.make_resource(f"/contests/{cid}/submissions/{id}/files")
         result = await self.get_file(path)
         file_name = f"{filename}_{id}.zip"
-        zip_path = Path(file_path) / file_name
+        zip_path = Path(target_dir) / file_name
         async with aiofiles.open(zip_path, "wb") as f:
             await f.write(result)
 
@@ -77,7 +78,7 @@ class SubmissionsAPI(V4Client):
                 file_ex = os.path.splitext(file)[-1]
                 await aio_os.rename(
                     file,
-                    Path(file_path) / f"{filename}_{id}{file_ex}",
+                    Path(target_dir) / f"{filename}_{id}{file_ex}",
                 )
                 await aio_os.remove(zip_path)
 
@@ -88,7 +89,6 @@ class SubmissionsAPI(V4Client):
         cid: str,
         id: str,
     ) -> SubmissionFile:
-
         path = self.make_resource(f"/contests/{cid}/submissions/{id}/source-code")
         result = await self.get(path)
-        return SubmissionFile(**result[0])
+        return SubmissionFile.model_validate(result[0])
