@@ -1,12 +1,11 @@
-import random
+import secrets
 import string
 
 
-def gen_password(length=None, pattern=None) -> str:
-    if not length:
-        length = 10
-
-    if not pattern:
-        pattern = string.ascii_letters + string.digits
-
-    return "".join(random.choices(pattern, k=length))
+def gen_password(
+    length: int | None = None,
+    pattern: str | None = None,
+) -> str:
+    pwd_length = length or 10
+    pwd_pattern = pattern or (string.ascii_letters + string.digits)
+    return "".join(secrets.choice(pwd_pattern) for _ in range(pwd_length))

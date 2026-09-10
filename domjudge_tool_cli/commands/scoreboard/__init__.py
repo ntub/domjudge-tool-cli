@@ -75,14 +75,21 @@ def export(
     url: Annotated[str | None, typer.Option(help="Scoreboard URL.")] = None,
     path_prefix: Annotated[str | None, typer.Option(help="Path prefix.")] = None,
 ) -> None:
+    client = get_or_ask_config(general_state["config"])
     if not url:
-        client = get_or_ask_config(general_state["config"])
         host_str = str(client.host).rstrip("/")
         url = f"{host_str}/public?static=1"
 
     cookies = {"domjudge_cid": f"{cid}"} if cid else None
+    verify = not client.disable_ssl
 
-    res = httpx.get(url, cookies=cookies, follow_redirects=True).content
+    res = httpx.get(
+        url,
+        cookies=cookies,
+        follow_redirects=True,
+        verify=verify,
+        timeout=client.get_timeout,
+    ).content
     soup = BeautifulSoup(res, "html.parser")
 
     header_row = soup.find("tr", class_="scoreheader")

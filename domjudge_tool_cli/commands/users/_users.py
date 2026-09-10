@@ -14,10 +14,17 @@ def gen_user_dataset(users: list[Any]) -> Dataset:
     dataset = Dataset()
     for idx, user in enumerate(users):
         user_dict = user.model_dump()
+        row_values: list[Any] = []
+        for k, v in user_dict.items():
+            if k == "roles" and isinstance(v, list):
+                row_values.append(",".join(str(r) for r in v))
+            else:
+                row_values.append(v)
+
         if idx == 0:
             dataset.headers = list(user_dict.keys())
 
-        dataset.append(list(user_dict.values()))
+        dataset.append(row_values)
 
     return dataset
 
@@ -51,10 +58,6 @@ class UserExportFormat(StrEnum):
 
 def print_users_table(users: list[User]) -> None:
     dataset = gen_user_dataset(users)
-    for user_row in dataset:
-        roles_index = dataset.headers.index("roles")
-        dataset[roles_index] = ",".join(user_row[roles_index])
-
     typer.echo(dataset.export("cli", tablefmt="simple"))
 
 
