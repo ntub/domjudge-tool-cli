@@ -1,28 +1,25 @@
-import os
 from email.mime.text import MIMEText
-from email.utils import formataddr, formatdate, getaddresses, make_msgid
-from enum import Enum
-from io import TextIOWrapper
+from email.utils import formatdate, make_msgid
+from enum import StrEnum
 from pathlib import Path
 from string import Template
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 
-class FileType(str, Enum):
+class FileType(StrEnum):
     TEXT = ".txt"
     HTML = ".html"
 
 
 def load_template(
-    path: Union[str, TextIOWrapper, Path],
-) -> Optional[Tuple[Template, str]]:
-    file_name = os.path.basename(path)
-    _, extension = os.path.splitext(file_name)
+    path: str | Path,
+) -> tuple[Template, str]:
+    path_obj = Path(path)
+    extension = path_obj.suffix
 
-    with open(path, "r", encoding="utf-8") as f:
-        txt = f.read()
-        template = Template(txt)
-        return template, extension
+    txt = path_obj.read_text(encoding="utf-8")
+    template = Template(txt)
+    return template, extension
 
 
 class EmailContext:
@@ -36,29 +33,34 @@ class EmailContext:
     ):
         path = Path(template_dir)
 
-        assert path.exists() and path.is_dir(), f"No such directory {template_dir}."
+        if not (path.exists() and path.is_dir()):
+            raise FileNotFoundError(f"No such directory {template_dir}.")
 
         subject_templates = list(path.glob("subject.txt"))
-        assert subject_templates, f"No such file subject.txt in {template_dir}."
+        if not subject_templates:
+            raise FileNotFoundError(f"No such file subject.txt in {template_dir}.")
         self.subject_template, _ = load_template(subject_templates[0])
 
         body_templates = list(path.glob("body.html")) + list(path.glob("body.txt"))
-        assert (
-            body_templates
-        ), f"No such file subject.html or subject.txt in {template_dir}."
-        self.body_template, self.body_file_type = load_template(body_templates[0])
+        if not body_templates:
+            raise FileNotFoundError(
+                f"No such file body.html or body.txt in {template_dir}."
+            )
+        template, ext = load_template(body_templates[0])
+        self.body_template = template
+        self.body_file_type = FileType.HTML if ext == ".html" else FileType.TEXT
 
-    def render_subject(self, **kwargs) -> str:
+    def render_subject(self, **kwargs: Any) -> str:
         return self.subject_template.substitute(**kwargs)
 
-    def render_body(self, **kwargs) -> str:
+    def render_body(self, **kwargs: Any) -> str:
         return self.body_template.substitute(**kwargs)
 
     def mime(
         self,
         from_email: str,
-        to_address: List[str],
-        **kwargs: Dict[str, Any],
+        to_address: list[str],
+        **kwargs: Any,
     ) -> MIMEText:
         _, domain = from_email.split("@")
         mail_content_type = "html" if self.body_file_type == FileType.HTML else "plain"

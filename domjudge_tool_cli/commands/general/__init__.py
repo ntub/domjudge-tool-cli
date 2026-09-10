@@ -25,8 +25,7 @@ general_state: dict[str, Path | None] = {
 def ask_want_to_config() -> DomServerClient:
     host = typer.prompt("What's your dom server host URL?", type=str)
     username = typer.prompt(
-        "What's your dom server user?",
-        help="must be `admin`, `api_reader`, `api_writer` roles.",
+        "What's your dom server user? (must be `admin`, `api_reader`, `api_writer` roles)",
         type=str,
     )
     password = typer.prompt(

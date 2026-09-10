@@ -1,5 +1,5 @@
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 
 from bs4 import BeautifulSoup
 
@@ -7,35 +7,35 @@ from domjudge_tool_cli.models import Affiliation, CreateUser, ProblemItem, User
 from domjudge_tool_cli.services.web.base import BaseDomServerWeb, _get_input_fields
 
 
-class HomePath(str, Enum):
+class HomePath(StrEnum):
     JURY = "/jury"
     LOGIN = "/login"
 
 
-class UserPath(str, Enum):
+class UserPath(StrEnum):
     LIST = "/jury/users"
     ADD = "/jury/users/add"
     EDIT = "/jury/users/%s/edit"
 
 
-class TeamPath(str, Enum):
+class TeamPath(StrEnum):
     LIST = "/jury/teams"
     ADD = "/jury/teams/add"
     EDIT = "/jury/teams/%s/edit"
     DELETE = "/jury/teams/%s/delete"
 
 
-class AffiliationPath(str, Enum):
+class AffiliationPath(StrEnum):
     LIST = "/jury/affiliations"
     ADD = "/jury/affiliations/add"
 
 
-class ProblemPath(str, Enum):
+class ProblemPath(StrEnum):
     LIST = "/jury/problems"
     ADD = "/jury/problems/add"
 
 
-class AddUserForTeam(str, Enum):
+class AddUserForTeam(StrEnum):
     CREATE_NEW = "create-new-user"
     ADD_EXISTING = "add-existing-user"
     DONT_ADD = "dont-add-user"
@@ -261,8 +261,9 @@ class DomServerWeb(BaseDomServerWeb):
             shortname = links[2].text.strip()
             name = links[3].text.strip()
             img = links[4].find("img")
-            if img is not None and isinstance(img.get("alt"), str):
-                country = img["alt"].strip()
+            alt_val = img.get("alt") if img is not None else None
+            if isinstance(alt_val, str):
+                country = alt_val.strip()
             else:
                 country = links[4].text.strip()
             obj = Affiliation(

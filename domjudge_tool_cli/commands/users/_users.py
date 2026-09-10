@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 import typer
@@ -22,7 +22,7 @@ def gen_user_dataset(users: list[Any]) -> Dataset:
     return dataset
 
 
-class UserExportFormat(str, Enum):
+class UserExportFormat(StrEnum):
     JSON = "json"
     CSV = "csv"
 

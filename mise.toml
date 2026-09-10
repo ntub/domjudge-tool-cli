@@ -9,29 +9,30 @@ UV_PYTHON = { value = "{{ tools.python.path }}", tools = true }
 
 [settings]
 lockfile = true
-"python.uv_venv_auto" = "source"
 minimum_release_age = "0"
 
 [tasks.install]
 run = "uv sync --locked"
 
 [tasks.format]
-run = "uv run ruff check --fix . && uv run ruff format ."
+run = "uv run --locked ruff check --fix . && uv run --locked ruff format ."
 
 [tasks."format-check"]
-run = "uv run ruff format --check ."
+run = "uv run --locked ruff format --check ."
 
 [tasks.lint]
-run = "uv run ruff check ."
+run = "uv run --locked ruff check ."
 
 [tasks.typecheck]
-run = "uv run ty check"
+run = "uv run --locked ty check"
 
 [tasks.test]
-run = "uv run pytest"
+run = "uv run --locked pytest"
 
 [tasks.build]
 run = "uv build"
 
 [tasks.check]
 depends = ["format-check", "lint", "typecheck", "test"]
+depends_post = []
+wait_for = []
