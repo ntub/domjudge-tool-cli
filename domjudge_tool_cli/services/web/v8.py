@@ -2,8 +2,13 @@ from enum import StrEnum
 
 from bs4 import BeautifulSoup
 
+from domjudge_tool_cli.exceptions import FormSubmitError
 from domjudge_tool_cli.models import Affiliation, CreateUser, ProblemItem, User
-from domjudge_tool_cli.services.web.base import BaseDomServerWeb, _get_input_fields
+from domjudge_tool_cli.services.web.base import (
+    BaseDomServerWeb,
+    _get_form_feedback,
+    _get_input_fields,
+)
 
 
 class HomePath(StrEnum):
@@ -72,7 +77,11 @@ class DomServerWeb(BaseDomServerWeb):
         }
         res = await self.post(HomePath.LOGIN, body=data)
         if res.url.path != HomePath.JURY:
-            raise AssertionError("Login fail.")
+            raise FormSubmitError(
+                "Login fail.",
+                path=HomePath.LOGIN,
+                details=_get_form_feedback(res.text),
+            )
 
     async def create_team_and_user(
         self,
@@ -97,7 +106,11 @@ class DomServerWeb(BaseDomServerWeb):
 
         res = await self.post(TeamPath.ADD, body=data)
         if res.url.path == TeamPath.ADD:
-            raise AssertionError(f"Team create fail. {user.username}")
+            raise FormSubmitError(
+                f"Team create fail. {user.username}",
+                path=TeamPath.ADD,
+                details=_get_form_feedback(res.text),
+            )
 
         team_id = res.url.path.rstrip("/").split("/")[-1]
 
@@ -132,7 +145,11 @@ class DomServerWeb(BaseDomServerWeb):
 
         res = await self.post(url, body=data)
         if res.url.path == url:
-            raise AssertionError(f"Team update fail. {user.username}")
+            raise FormSubmitError(
+                f"Team update fail. {user.username}",
+                path=url,
+                details=_get_form_feedback(res.text),
+            )
 
         team_id = res.url.path.rstrip("/").split("/")[-1]
 
@@ -167,7 +184,12 @@ class DomServerWeb(BaseDomServerWeb):
         res.raise_for_status()
 
         if res.url.path == url:
-            raise AssertionError(f"User set password fail. {user_id}")
+            # DOMjudge re-rendered the form, so the password was rejected.
+            raise FormSubmitError(
+                f"User set password fail. {user_id}",
+                path=url,
+                details=_get_form_feedback(res.text),
+            )
 
     async def _confirm_and_post_delete(self, href: str) -> None:
         confirm_res = await self.get(href)
@@ -180,7 +202,12 @@ class DomServerWeb(BaseDomServerWeb):
         self,
         include: list[str] | None = None,
         exclude: list[str] | None = None,
-    ) -> None:
+    ) -> int:
+        """Delete matching users and return how many were deleted.
+
+        Returns 0 when nothing matched, so callers can confirm a cleanup
+        actually happened instead of assuming success from a silent no-op.
+        """
         include_set = {it.lower() for it in (include or [])}
         exclude_set = {it.lower() for it in (exclude or [])}
         res = await self.get(UserPath.LIST)
@@ -205,11 +232,14 @@ class DomServerWeb(BaseDomServerWeb):
         for href in delete_hrefs:
             await self._confirm_and_post_delete(href)
 
+        return len(delete_hrefs)
+
     async def delete_teams(
         self,
         include: list[str] | None = None,
         exclude: list[str] | None = None,
-    ) -> None:
+    ) -> int:
+        """Delete matching teams and return how many were deleted."""
         include_set = {it.lower() for it in (include or [])}
         exclude_set = {it.lower() for it in (exclude or [])}
         res = await self.get(TeamPath.LIST)
@@ -233,6 +263,50 @@ class DomServerWeb(BaseDomServerWeb):
         for href in delete_hrefs:
             await self._confirm_and_post_delete(href)
 
+        return len(delete_hrefs)
+
+    async def delete_affiliation(self, affiliation_id: str) -> int:
+        """Delete one affiliation by id and report how many rows were deleted."""
+        res = await self.get(AffiliationPath.LIST)
+        res.raise_for_status()
+
+        soup = BeautifulSoup(res.text, "html.parser")
+        target = str(affiliation_id).strip().lower()
+        for row in soup.select("table tbody tr"):
+            a_tags = row.select("a")
+            if len(a_tags) < 2:
+                continue
+            row_id = a_tags[0].text.strip().lower()
+            if row_id != target:
+                continue
+
+            href = a_tags[-1].get("href")
+            if not isinstance(href, str):
+                continue
+            await self._confirm_and_post_delete(href)
+            return 1
+
+        return 0
+
+    async def get_min_password_length(self) -> int | None:
+        """Read the minimum password length DOMjudge renders on its user form.
+
+        DOMjudge 8.x marks the password field with minlength, sourced from the
+        same constant it validates against, so this reflects the deployed
+        configuration instead of an assumed version default.
+        """
+        res = await self.get(UserPath.ADD)
+        res.raise_for_status()
+
+        soup = BeautifulSoup(res.text, "html.parser")
+        fields = soup.find_all("input", attrs={"name": "user[plainPassword]"})
+        if not fields:
+            return None
+        raw = fields[0].get("minlength")
+        if not isinstance(raw, str) or not raw.strip().isdigit():
+            return None
+        return int(raw)
+
     async def create_affiliation(
         self,
         shortname: str,
@@ -250,7 +324,11 @@ class DomServerWeb(BaseDomServerWeb):
 
         res = await self.post(AffiliationPath.ADD, body=data)
         if res.url.path == AffiliationPath.ADD:
-            raise AssertionError("Affiliation create fail.")
+            raise FormSubmitError(
+                "Affiliation create fail.",
+                path=AffiliationPath.ADD,
+                details=_get_form_feedback(res.text),
+            )
         affiliation_id = res.url.path.rstrip("/").split("/")[-1]
 
         return Affiliation(

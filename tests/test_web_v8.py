@@ -4,6 +4,7 @@ from pathlib import Path
 import httpx
 import pytest
 
+from domjudge_tool_cli.exceptions import FormSubmitError
 from domjudge_tool_cli.models import CreateUser, User
 from domjudge_tool_cli.services.web import v8
 
@@ -71,7 +72,7 @@ async def test_login_stayed_on_login_fails() -> None:
 
     web = create_mock_client(handler)
     async with web:
-        with pytest.raises(AssertionError, match="Login fail."):
+        with pytest.raises(FormSubmitError, match="Login fail."):
             await web.login()
 
 
@@ -144,7 +145,7 @@ async def test_create_team_and_user_stayed_on_form_fails() -> None:
     web = create_mock_client(handler)
     user = CreateUser(username="team-alpha", name="Team Alpha")
     async with web:
-        with pytest.raises(AssertionError, match="Team create fail. team-alpha"):
+        with pytest.raises(FormSubmitError, match="Team create fail. team-alpha"):
             await web.create_team_and_user(user, 3, 8)
 
 
@@ -240,7 +241,7 @@ async def test_update_team_stayed_on_form_fails() -> None:
     web = create_mock_client(handler)
     user = User(id="7", username="team-alpha", name="Team Alpha", team_id="99")
     async with web:
-        with pytest.raises(AssertionError, match="Team update fail. team-alpha"):
+        with pytest.raises(FormSubmitError, match="Team update fail. team-alpha"):
             await web.update_team(user, 4, 8)
 
 
@@ -315,16 +316,25 @@ async def test_set_user_password_overrides_roles_when_specified() -> None:
 @pytest.mark.anyio
 async def test_set_user_password_stayed_on_form_fails() -> None:
     edit_form = read_fixture("user_edit_form.html")
+    rejected_page = (
+        edit_form
+        + "<div class='alert alert-danger'>Password should be 10+ chars.</div>"
+    )
 
     def handler(request: httpx.Request) -> httpx.Response:
         if request.url.path == "/jury/users/7/edit":
-            return httpx.Response(200, text=edit_form)
+            return httpx.Response(200, text=rejected_page)
         return httpx.Response(404)
 
     web = create_mock_client(handler)
     async with web:
-        with pytest.raises(AssertionError, match="User set password fail. 7"):
+        with pytest.raises(FormSubmitError, match="User set password fail. 7") as exc:
             await web.set_user_password("7", "new-password", [3])
+
+    # The reason DOMjudge rendered must reach the caller, not just a bare failure.
+    assert "Password should be 10+ chars." in str(exc.value)
+    assert exc.value.details == ["Password should be 10+ chars."]
+    assert exc.value.path == "/jury/users/7/edit"
 
 
 # ---------------------------------------------------------------------------
@@ -380,7 +390,7 @@ async def test_create_affiliation_stayed_on_form_fails() -> None:
 
     web = create_mock_client(handler)
     async with web:
-        with pytest.raises(AssertionError, match="Affiliation create fail."):
+        with pytest.raises(FormSubmitError, match="Affiliation create fail."):
             await web.create_affiliation("short", "name")
 
 
@@ -450,11 +460,12 @@ async def test_delete_users_confirms_then_posts() -> None:
 
     web = create_mock_client(handler)
     async with web:
-        await web.delete_users(
+        deleted = await web.delete_users(
             include=["anne26a", "cindy950093"],
             exclude=["cindy950093"],
         )
 
+    assert deleted == 1
     assert confirm_gets == ["/jury/users/11/delete"]
     assert delete_posts == ["/jury/users/11/delete"]
 
@@ -484,8 +495,9 @@ async def test_delete_teams_confirms_then_posts_second_to_last_anchor() -> None:
 
     web = create_mock_client(handler)
     async with web:
-        await web.delete_teams(include=["10"], exclude=None)
+        deleted = await web.delete_teams(include=["10"], exclude=None)
 
+    assert deleted == 1
     assert confirm_gets == ["/jury/teams/10/delete"]
     assert delete_posts == ["/jury/teams/10/delete"]
     assert not clarification_called
@@ -510,10 +522,39 @@ async def test_delete_users_and_teams_inverted_filter_quirk() -> None:
     web = create_mock_client(handler)
     async with web:
         # Nil or empty include must delete zero rows (Python inverted filter quirk)
-        await web.delete_users(include=None)
-        await web.delete_users(include=[])
-        await web.delete_teams(include=None)
-        await web.delete_teams(include=[])
+        assert await web.delete_users(include=None) == 0
+        assert await web.delete_users(include=[]) == 0
+        assert await web.delete_teams(include=None) == 0
+        assert await web.delete_teams(include=[]) == 0
+
+    assert not delete_hit
+
+
+@pytest.mark.anyio
+async def test_delete_reports_zero_when_identifier_matches_no_row() -> None:
+    """A padded or wrong identifier matches nothing.
+
+    The count is what lets a caller detect a no-op cleanup instead of assuming
+    the row is gone because no exception was raised.
+    """
+    users_html = read_fixture("users.html")
+    teams_html = read_fixture("teams.html")
+    delete_hit = False
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal delete_hit
+        if "delete" in request.url.path:
+            delete_hit = True
+        if request.url.path == "/jury/users":
+            return httpx.Response(200, text=users_html)
+        if request.url.path == "/jury/teams":
+            return httpx.Response(200, text=teams_html)
+        return httpx.Response(200)
+
+    web = create_mock_client(handler)
+    async with web:
+        assert await web.delete_users(include=["  anne26a  "]) == 0
+        assert await web.delete_teams(include=[" 10 "]) == 0
 
     assert not delete_hit
 

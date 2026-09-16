@@ -55,6 +55,21 @@ def _get_input_fields(page: str) -> dict[str, str | list[str]]:
     return data
 
 
+def _get_form_feedback(page: str) -> list[str]:
+    """Extract the messages DOMjudge renders when it rejects a form.
+
+    A rejected write re-renders the same page with the reason in a flash alert
+    and/or per-field validation feedback, so both are collected.
+    """
+    soup = BeautifulSoup(page, "html.parser")
+    messages: list[str] = []
+    for ele in soup.select(".alert, .invalid-feedback"):
+        text = ele.get_text(" ", strip=True)
+        if text and text not in messages:
+            messages.append(text)
+    return messages
+
+
 class BaseDomServerWeb(WebClient, ABC):
     @abstractmethod
     async def login(self) -> None: ...
@@ -91,14 +106,14 @@ class BaseDomServerWeb(WebClient, ABC):
         self,
         include: list[str] | None = None,
         exclude: list[str] | None = None,
-    ) -> None: ...
+    ) -> int: ...
 
     @abstractmethod
     async def delete_teams(
         self,
         include: list[str] | None = None,
         exclude: list[str] | None = None,
-    ) -> None: ...
+    ) -> int: ...
 
     @abstractmethod
     async def create_affiliation(
@@ -112,6 +127,13 @@ class BaseDomServerWeb(WebClient, ABC):
     async def get_affiliations(self) -> list[Affiliation]: ...
 
     @abstractmethod
+    async def delete_affiliation(self, affiliation_id: str) -> int:
+        """Delete one affiliation and report how many rows were deleted.
+
+        Used to undo an affiliation created as part of a larger operation.
+        """
+
+    @abstractmethod
     async def get_affiliation(self, name: str) -> Affiliation | None: ...
 
     @abstractmethod
@@ -120,3 +142,11 @@ class BaseDomServerWeb(WebClient, ABC):
         exclude: list[str] | None = None,
         only: list[str] | None = None,
     ) -> list[ProblemItem]: ...
+
+    @abstractmethod
+    async def get_min_password_length(self) -> int | None:
+        """Minimum password length the server enforces, or None if unstated.
+
+        DOMjudge renders its own minimum on the add-user form, which is more
+        authoritative than any client-side version table.
+        """
